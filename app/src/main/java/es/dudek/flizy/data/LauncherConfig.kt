@@ -4,14 +4,32 @@ import android.content.Context
 import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.Serializer
 import androidx.datastore.dataStore
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.InputStream
 import java.io.OutputStream
 
+/**
+ * Szerokość kafelka w kolumnach siatki 12-kolumnowej (1/4, 1/3, 1/2, 2/3, cały rząd).
+ * Nazwy MEDIUM/WIDE z pierwszej wersji (siatka 6 kolumn) odpowiadają 1/3 i 2/3.
+ */
 @Serializable
-enum class TileSize { MEDIUM, WIDE }
+enum class TileSize(val columns: Int) {
+    QUARTER(3),
+
+    @SerialName("MEDIUM")
+    THIRD(4),
+    HALF(6),
+
+    @SerialName("WIDE")
+    TWO_THIRDS(8),
+    FULL(12),
+    ;
+
+    fun step(delta: Int): TileSize = entries[(ordinal + delta).coerceIn(0, entries.lastIndex)]
+}
 
 /**
  * Przypięty kafelek. Nowe pola (np. żywe kafelki, duży rozmiar) dodawać z wartościami
@@ -22,7 +40,7 @@ data class TileConfig(
     val packageName: String,
     val className: String,
     val userSerial: Long,
-    val size: TileSize = TileSize.MEDIUM,
+    val size: TileSize = TileSize.THIRD,
 ) {
     val key: AppKey get() = AppKey(packageName, className, userSerial)
 }
@@ -40,8 +58,6 @@ data class LauncherConfig(
     val tiles: List<TileConfig> = emptyList(),
     val accent: String = DEFAULT_ACCENT,
     val autoLaunchSingleMatch: Boolean = true,
-    /** Siatka 6 kolumn (3 średnie kafelki w rzędzie) zamiast 4, jak "więcej kafelków" w WP 8.1. */
-    val moreTiles: Boolean = true,
     val hiddenApps: List<AppKey> = emptyList(),
     val aliases: List<AppAlias> = emptyList(),
     /** Wersja zastosowanej konfiguracji startowej ([PersonalSeed]); 0 = jeszcze nie zastosowana. */

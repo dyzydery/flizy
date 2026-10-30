@@ -69,29 +69,29 @@ import java.util.Locale
 private val TileGap = 4.dp
 private val SidePadding = 8.dp
 
-/** Rząd siatki o wysokości średniego kafelka; średni zajmuje 1 miejsce, szeroki 2. */
+private const val GRID_COLUMNS = 12
+
+/** Rząd siatki; wysokość rzędu = szerokość kafelka 1/3. */
 data class TileRow(val tiles: List<Tile>) {
     val key: String get() = tiles.joinToString("|") { it.app.key.toString() }
 }
 
-private val Tile.slots: Int get() = if (config.size == TileSize.WIDE) 2 else 1
-
 /**
  * Gęste upakowanie jak w WP: kafelek trafia do pierwszego rzędu, w którym jest dla niego
- * miejsce, więc luki po samotnych średnich kafelkach wypełniają kolejne.
- * [slotsPerRow] = 2 (siatka 4 kolumn) albo 3 (6 kolumn, "więcej kafelków").
+ * miejsce, więc luki zostawione przez większe kafelki wypełniają kolejne mniejsze.
  */
-fun packTiles(tiles: List<Tile>, slotsPerRow: Int): List<TileRow> {
+fun packTiles(tiles: List<Tile>): List<TileRow> {
     val rows = mutableListOf<MutableList<Tile>>()
     val used = mutableListOf<Int>()
     for (tile in tiles) {
-        val index = used.indexOfFirst { it + tile.slots <= slotsPerRow }
+        val width = tile.config.size.columns
+        val index = used.indexOfFirst { it + width <= GRID_COLUMNS }
         if (index >= 0) {
             rows[index] += tile
-            used[index] += tile.slots
+            used[index] += width
         } else {
             rows += mutableListOf(tile)
-            used += tile.slots
+            used += width
         }
     }
     return rows.map { TileRow(it) }
@@ -104,24 +104,25 @@ fun StartScreen(
     listState: LazyListState,
     onLaunch: (Tile) -> Unit,
     onTileLongPress: (Tile, anchorBottomPx: Float) -> Unit,
-    onEditTiles: () -> Unit,
-    onSettings: () -> Unit,
+    onEmptyLongPress: (anchorPx: Float) -> Unit,
     onAllApps: () -> Unit,
+    onClockClick: () -> Unit,
+    onDateClick: () -> Unit,
     modifier: Modifier = Modifier,
-    moreTiles: Boolean = true,
-    onClockClick: () -> Unit = {},
-    onDateClick: () -> Unit = {},
 ) {
-    val slotsPerRow = if (moreTiles) 3 else 2
-    val rows = remember(tiles, slotsPerRow) { packTiles(tiles, slotsPerRow) }
+    val rows = remember(tiles) { packTiles(tiles) }
     BoxWithConstraints(modifier.fillMaxSize().background(Metro.Background)) {
-        val medium: Dp = (maxWidth - SidePadding * 2 - TileGap * (slotsPerRow - 1)) / slotsPerRow
+        // Siatka 12 kolumn z odstępem między każdą: kafelek k kolumn = k*kolumna + (k-1)*odstęp,
+        // dzięki czemu kafelki w różnych rzędach wyrównują się co do piksela.
+        val column: Dp = (maxWidth - SidePadding * 2 - TileGap * (GRID_COLUMNS - 1)) / GRID_COLUMNS
+        fun widthOf(columns: Int): Dp = column * columns + TileGap * (columns - 1)
+        val rowHeight = widthOf(TileSize.THIRD.columns)
         LazyColumn(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
-                // Przytrzymanie pustego miejsca (poza kafelkami) otwiera edycję.
-                .pointerInput(Unit) { detectTapGestures(onLongPress = { onEditTiles() }) },
+                // Przytrzymanie pustego miejsca (poza kafelkami): menu z edycją i ustawieniami.
+                .pointerInput(Unit) { detectTapGestures(onLongPress = { onEmptyLongPress(it.y) }) },
             contentPadding = PaddingValues(horizontal = SidePadding),
             verticalArrangement = Arrangement.spacedBy(TileGap),
         ) {
@@ -138,15 +139,14 @@ fun StartScreen(
             }
 
             items(rows, key = { it.key }) { row ->
-                Row(Modifier.fillMaxWidth().height(medium), horizontalArrangement = Arrangement.spacedBy(TileGap)) {
+                Row(Modifier.fillMaxWidth().height(rowHeight), horizontalArrangement = Arrangement.spacedBy(TileGap)) {
                     row.tiles.forEach { tile ->
-                        val width = medium * tile.slots + TileGap * (tile.slots - 1)
-                        TileView(tile, icons, Modifier.width(width).fillMaxHeight(), onLaunch, onTileLongPress, compact = moreTiles)
+                        TileView(tile, icons, Modifier.width(widthOf(tile.config.size.columns)).fillMaxHeight(), onLaunch, onTileLongPress)
                     }
                 }
             }
 
-            item { StartFooter(onEditTiles, onSettings, onAllApps) }
+            item { StartFooter(onAllApps) }
             item { Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars)) }
         }
     }
@@ -180,7 +180,10 @@ private fun ClockHeader(onClockClick: () -> Unit, onDateClick: () -> Unit) {
     }
     val date = remember(now) { SimpleDateFormat("EEEE, d MMMM", locale).format(Date(now)) }
 
-    Column(Modifier.statusBarsPadding().padding(start = 4.dp, top = 16.dp, bottom = 16.dp)) {
+    Column(
+        Modifier.fillMaxWidth().statusBarsPadding().padding(top = 16.dp, bottom = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
         BasicText(
             time,
             style = MetroText.Clock,
@@ -189,7 +192,7 @@ private fun ClockHeader(onClockClick: () -> Unit, onDateClick: () -> Unit) {
         BasicText(
             date,
             style = MetroText.Date,
-            modifier = Modifier.plainClickable(onClick = onDateClick).padding(start = 4.dp, bottom = 4.dp),
+            modifier = Modifier.plainClickable(onClick = onDateClick).padding(bottom = 4.dp),
         )
     }
 }
@@ -201,8 +204,8 @@ private fun TileView(
     modifier: Modifier,
     onLaunch: (Tile) -> Unit,
     onLongPress: (Tile, Float) -> Unit,
-    compact: Boolean,
 ) {
+    val narrow = tile.config.size == TileSize.QUARTER
     val mono = rememberMonoIcon(tile.app, icons)
     var bottom by remember { mutableFloatStateOf(0f) }
     Box(
@@ -220,26 +223,19 @@ private fun TileView(
         }
         BasicText(
             tile.app.label,
-            style = if (compact) MetroText.TileLabel.copy(fontSize = 12.sp) else MetroText.TileLabel,
+            style = MetroText.TileLabel.copy(fontSize = if (narrow) 11.sp else 12.sp),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.align(Alignment.BottomStart).padding(start = 6.dp, end = 6.dp, bottom = if (compact) 4.dp else 6.dp),
+            modifier = Modifier.align(Alignment.BottomStart).padding(start = 6.dp, end = 6.dp, bottom = 4.dp),
         )
     }
 }
 
+/** Okrągły przycisk ze strzałką do listy aplikacji, jak w WP 8. */
 @Composable
-private fun StartFooter(onEditTiles: () -> Unit, onSettings: () -> Unit, onAllApps: () -> Unit) {
-    Row(
-        Modifier.fillMaxWidth().padding(top = 20.dp, bottom = 16.dp, start = 4.dp, end = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        FooterLink(stringResource(R.string.start_edit), onEditTiles)
-        Spacer(Modifier.width(20.dp))
-        FooterLink(stringResource(R.string.start_settings), onSettings)
-        Spacer(Modifier.weight(1f))
-        // Okrągły przycisk ze strzałką do listy aplikacji, jak w WP 8.
-        val allApps = stringResource(R.string.start_all_apps)
+private fun StartFooter(onAllApps: () -> Unit) {
+    val allApps = stringResource(R.string.start_all_apps)
+    Box(Modifier.fillMaxWidth().padding(top = 20.dp, bottom = 16.dp, end = 4.dp), contentAlignment = Alignment.CenterEnd) {
         Box(
             Modifier
                 .size(44.dp)
@@ -251,9 +247,4 @@ private fun StartFooter(onEditTiles: () -> Unit, onSettings: () -> Unit, onAllAp
             BasicText("→", style = MetroText.Body.copy(fontSize = 22.sp))
         }
     }
-}
-
-@Composable
-private fun FooterLink(text: String, onClick: () -> Unit) {
-    BasicText(text, style = MetroText.Subtle, modifier = Modifier.plainClickable(onClick = onClick).padding(vertical = 10.dp))
 }

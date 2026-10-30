@@ -21,15 +21,15 @@ object PersonalSeed {
     private const val WORK = 11
 
     val tiles = listOf(
-        SeedTile(App("com.google.android.calendar", "com.android.calendar.AllInOneActivity", WORK), TileSize.WIDE),
-        SeedTile(App("com.duolingo", "com.duolingo.app.LoginActivity", MAIN), TileSize.MEDIUM),
-        SeedTile(App("com.spotify.music", "com.spotify.music.MainActivity", MAIN), TileSize.MEDIUM),
-        SeedTile(App("com.darkempire78.opencalculator", "com.darkempire78.opencalculator.activities.MainActivity", MAIN), TileSize.MEDIUM),
-        SeedTile(App("com.google.android.gm", "com.google.android.gm.ConversationListActivityGmail", MAIN), TileSize.MEDIUM),
-        SeedTile(App("com.whatsapp", "com.whatsapp.Main", MAIN), TileSize.MEDIUM),
-        SeedTile(App("com.google.android.gm", "com.google.android.gm.ConversationListActivityGmail", WORK), TileSize.MEDIUM),
-        SeedTile(App("com.google.android.apps.maps", "com.google.android.maps.MapsActivity", MAIN), TileSize.WIDE),
-        SeedTile(App("pl.inko.infopigulaOne", "pl.inko.infopigulaOne.MainActivity", MAIN), TileSize.MEDIUM),
+        SeedTile(App("com.google.android.calendar", "com.android.calendar.AllInOneActivity", WORK), TileSize.TWO_THIRDS),
+        SeedTile(App("com.duolingo", "com.duolingo.app.LoginActivity", MAIN), TileSize.THIRD),
+        SeedTile(App("com.spotify.music", "com.spotify.music.MainActivity", MAIN), TileSize.THIRD),
+        SeedTile(App("com.darkempire78.opencalculator", "com.darkempire78.opencalculator.activities.MainActivity", MAIN), TileSize.THIRD),
+        SeedTile(App("com.google.android.gm", "com.google.android.gm.ConversationListActivityGmail", MAIN), TileSize.THIRD),
+        SeedTile(App("com.whatsapp", "com.whatsapp.Main", MAIN), TileSize.THIRD),
+        SeedTile(App("com.google.android.gm", "com.google.android.gm.ConversationListActivityGmail", WORK), TileSize.THIRD),
+        SeedTile(App("com.google.android.apps.maps", "com.google.android.maps.MapsActivity", MAIN), TileSize.TWO_THIRDS),
+        SeedTile(App("pl.inko.infopigulaOne", "pl.inko.infopigulaOne.MainActivity", MAIN), TileSize.THIRD),
     )
 
     val hidden = listOf(

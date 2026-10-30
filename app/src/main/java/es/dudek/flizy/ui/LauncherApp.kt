@@ -88,9 +88,10 @@ fun LauncherApp(
     val unpinLabel = stringResource(R.string.menu_unpin)
     val infoLabel = stringResource(R.string.menu_app_info)
     val uninstallLabel = stringResource(R.string.menu_uninstall)
-    val wideLabel = stringResource(R.string.menu_resize_wide)
-    val mediumLabel = stringResource(R.string.menu_resize_medium)
+    val growLabel = stringResource(R.string.menu_resize_grow)
+    val shrinkLabel = stringResource(R.string.menu_resize_shrink)
     val editLabel = stringResource(R.string.menu_edit_tiles)
+    val settingsLabel = stringResource(R.string.menu_settings)
     val renameLabel = stringResource(R.string.menu_rename)
     val hideLabel = stringResource(R.string.menu_hide)
 
@@ -119,14 +120,25 @@ fun LauncherApp(
     }
 
     fun showTileMenu(tile: Tile, anchor: Float) {
-        val wide = tile.config.size == TileSize.WIDE
+        val size = tile.config.size
         menu = MenuRequest(
             anchor,
-            listOf(
-                MenuItem(if (wide) mediumLabel else wideLabel) { vm.toggleTileSize(tile.app.key) },
+            listOfNotNull(
+                MenuItem(growLabel) { vm.resizeTile(tile.app.key, 1) }.takeIf { size != TileSize.FULL },
+                MenuItem(shrinkLabel) { vm.resizeTile(tile.app.key, -1) }.takeIf { size != TileSize.QUARTER },
                 MenuItem(renameLabel) { renaming = tile.app },
                 MenuItem(unpinLabel) { vm.unpin(tile.app.key) },
                 MenuItem(editLabel) { push(Screen.EditTiles) },
+            ),
+        )
+    }
+
+    fun showStartMenu(anchor: Float) {
+        menu = MenuRequest(
+            anchor,
+            listOf(
+                MenuItem(editLabel) { push(Screen.EditTiles) },
+                MenuItem(settingsLabel) { push(Screen.Settings) },
             ),
         )
     }
@@ -165,10 +177,8 @@ fun LauncherApp(
                         listState = startList,
                         onLaunch = { vm.launch(it.app) },
                         onTileLongPress = ::showTileMenu,
-                        onEditTiles = { push(Screen.EditTiles) },
-                        onSettings = { push(Screen.Settings) },
+                        onEmptyLongPress = ::showStartMenu,
                         onAllApps = { scope.launch { pager.animateScrollToPage(PAGE_APPS) } },
-                        moreTiles = cfg.moreTiles,
                         onClockClick = vm::openAlarms,
                         onDateClick = vm::openPrivateCalendar,
                     )
@@ -201,7 +211,6 @@ fun LauncherApp(
                         isDefaultLauncher = isDefaultLauncher,
                         onAccent = vm::setAccent,
                         onAutoLaunch = vm::setAutoLaunch,
-                        onMoreTiles = vm::setMoreTiles,
                         onSetDefault = onSetDefaultLauncher,
                         onEditTiles = { push(Screen.EditTiles) },
                         hiddenCount = hiddenApps.size,
@@ -213,7 +222,7 @@ fun LauncherApp(
                         icons = vm.icons,
                         onMove = vm::moveTile,
                         onMoveTo = vm::moveTileTo,
-                        onToggleSize = vm::toggleTileSize,
+                        onToggleSize = vm::cycleTileSize,
                         onUnpin = vm::unpin,
                         onAdd = { push(Screen.AddTile) },
                     )

@@ -1,7 +1,6 @@
 package es.dudek.flizy
 
 import android.app.Application
-import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.LauncherApps
 import android.content.pm.PackageManager
@@ -130,8 +129,8 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         val intent = Intent(AlarmClock.ACTION_SHOW_ALARMS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         try {
             context.startActivity(intent)
-        } catch (e: ActivityNotFoundException) {
-            Log.w(TAG, "Brak ekranu alarmów", e)
+        } catch (e: Exception) { // ActivityNotFoundException, SecurityException
+            Log.w(TAG, "Nie można otworzyć ekranu alarmów", e)
             launchPackage("com.android.deskclock", Process.myUserHandle())
         }
     }
@@ -154,7 +153,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
 
     // --- Kafelki ---
 
-    fun pin(app: AppEntry, size: TileSize = TileSize.MEDIUM) = update { c ->
+    fun pin(app: AppEntry, size: TileSize = TileSize.THIRD) = update { c ->
         if (c.tiles.any { it.key == app.key }) c
         else c.copy(tiles = c.tiles + TileConfig(app.key.packageName, app.key.className, app.key.userSerial, size))
     }
@@ -165,9 +164,15 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         c.copy(tiles = c.tiles.map { if (it.key == key) it.copy(size = size) else it })
     }
 
-    fun toggleTileSize(key: AppKey) = update { c ->
+    /** Większy/mniejszy o jeden stopień (1/4 → 1/3 → 1/2 → 2/3 → cały rząd). */
+    fun resizeTile(key: AppKey, delta: Int) = update { c ->
+        c.copy(tiles = c.tiles.map { if (it.key == key) it.copy(size = it.size.step(delta)) else it })
+    }
+
+    /** Kolejny rozmiar w kółko - do stukania w etykietę rozmiaru na ekranie edycji. */
+    fun cycleTileSize(key: AppKey) = update { c ->
         c.copy(tiles = c.tiles.map {
-            if (it.key == key) it.copy(size = if (it.size == TileSize.MEDIUM) TileSize.WIDE else TileSize.MEDIUM) else it
+            if (it.key == key) it.copy(size = TileSize.entries[(it.size.ordinal + 1) % TileSize.entries.size]) else it
         })
     }
 
@@ -208,7 +213,6 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
 
     fun setAutoLaunch(enabled: Boolean) = update { it.copy(autoLaunchSingleMatch = enabled) }
 
-    fun setMoreTiles(enabled: Boolean) = update { it.copy(moreTiles = enabled) }
 
     // --- Pierwsze uruchomienie ---
 
@@ -259,11 +263,11 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
 
         val wanted = listOf(
             (context.getSystemService(TelecomManager::class.java)?.defaultDialerPackage
-                ?: resolve(Intent(Intent.ACTION_DIAL))) to TileSize.MEDIUM,
-            Telephony.Sms.getDefaultSmsPackage(context) to TileSize.MEDIUM,
-            resolve(Intent(Intent.ACTION_VIEW, Uri.parse("https://example.com"))) to TileSize.WIDE,
-            resolve(Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA)) to TileSize.MEDIUM,
-            resolve(Intent(Settings.ACTION_SETTINGS)) to TileSize.MEDIUM,
+                ?: resolve(Intent(Intent.ACTION_DIAL))) to TileSize.THIRD,
+            Telephony.Sms.getDefaultSmsPackage(context) to TileSize.THIRD,
+            resolve(Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA)) to TileSize.THIRD,
+            resolve(Intent(Intent.ACTION_VIEW, Uri.parse("https://example.com"))) to TileSize.TWO_THIRDS,
+            resolve(Intent(Settings.ACTION_SETTINGS)) to TileSize.THIRD,
         )
         return wanted.mapNotNull { (pkg, size) ->
             apps.firstOrNull { it.key.packageName == pkg && it.key.userSerial == mainSerial }

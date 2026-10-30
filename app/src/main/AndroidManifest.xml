@@ -3,6 +3,8 @@
 
     <!-- Potrzebne do Intent.ACTION_DELETE (odinstalowanie z menu kontekstowego). -->
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+    <!-- Zegar MIUI wymaga go nawet do samego pokazania listy alarmów (AlarmClock.ACTION_SHOW_ALARMS). -->
+    <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
 
     <!-- Widoczność pakietów: tylko aplikacje z launcherową aktywnością
          oraz kilka intencji do wyboru domyślnych kafelków. Bez QUERY_ALL_PACKAGES. -->

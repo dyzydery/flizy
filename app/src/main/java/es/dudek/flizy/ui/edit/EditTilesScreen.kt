@@ -162,7 +162,15 @@ private fun EditRow(
         Column(Modifier.weight(1f)) {
             BasicText(tile.app.label, style = MetroText.Body, maxLines = 1, overflow = TextOverflow.Ellipsis)
             BasicText(
-                stringResource(if (tile.config.size == TileSize.WIDE) R.string.edit_size_wide else R.string.edit_size_medium),
+                stringResource(
+                    when (tile.config.size) {
+                        TileSize.QUARTER -> R.string.edit_size_quarter
+                        TileSize.THIRD -> R.string.edit_size_third
+                        TileSize.HALF -> R.string.edit_size_half
+                        TileSize.TWO_THIRDS -> R.string.edit_size_two_thirds
+                        TileSize.FULL -> R.string.edit_size_full
+                    },
+                ),
                 style = MetroText.Subtle.copy(color = accent),
                 modifier = Modifier.plainClickable(onClick = onToggleSize).padding(vertical = 4.dp, horizontal = 0.dp),
             )
