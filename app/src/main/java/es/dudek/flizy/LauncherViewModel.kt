@@ -109,14 +109,17 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
 
     fun launch(app: AppEntry, sourceBounds: Rect? = null) {
         try {
-            if (app.user == Process.myUserHandle()) {
-                // Bezpośrednio, z flagą MIUI: inaczej przy aplikacji z kopią w "Podwójnych aplikacjach"
-                // system pokazuje okno wyboru profilu.
+            val userId = app.user.hashCode() // UserHandle.hashCode() == identyfikator profilu (getIdentifier jest ukryte)
+            if (app.user == Process.myUserHandle() || userId == MIUI_XSPACE_USER_ID) {
+                // Aplikacja z kopią w "Podwójnych aplikacjach": MIUI przechwytuje start i pokazuje okno
+                // wyboru profilu. Flagi, którymi samo to okno uruchamia wybraną kopię, pomijają je
+                // (XSpaceManagerServiceImpl.checkXSpaceControl / resolveXSpaceIntent).
                 val intent = Intent(Intent.ACTION_MAIN)
                     .addCategory(Intent.CATEGORY_LAUNCHER)
                     .setComponent(app.component)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
-                    .putExtra(EXTRA_MIUI_XSPACE_AUTHORIZED, true)
+                    .putExtra(EXTRA_MIUI_XSPACE_USERID_SELECTED, true)
+                    .putExtra(EXTRA_MIUI_XSPACE_CACHED_UID, userId)
                 intent.sourceBounds = sourceBounds
                 context.startActivity(intent)
             } else {
@@ -326,7 +329,13 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         const val TAG = "Flizy"
         const val GOOGLE_CALENDAR = "com.google.android.calendar"
 
-        /** Flaga launchera MIUI: uruchom w bieżącym profilu bez okna wyboru XSpace. */
-        const val EXTRA_MIUI_XSPACE_AUTHORIZED = "android.intent.extra.auth_to_call_xspace"
+        /** MIUI: profil "Podwójnych aplikacji" (XSpace). */
+        const val MIUI_XSPACE_USER_ID = 999
+
+        /** MIUI: profil już wybrany - nie pokazuj okna wyboru. */
+        const val EXTRA_MIUI_XSPACE_USERID_SELECTED = "android.intent.extra.xspace_userid_selected"
+
+        /** MIUI: profil (identyfikator użytkownika), w którym uruchomić aplikację. */
+        const val EXTRA_MIUI_XSPACE_CACHED_UID = "android.intent.extra.xspace_cached_uid"
     }
 }
