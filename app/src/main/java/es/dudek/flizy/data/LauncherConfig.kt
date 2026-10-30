@@ -56,7 +56,13 @@ data class AppAlias(
 @Serializable
 data class LauncherConfig(
     val tiles: List<TileConfig> = emptyList(),
+    val theme: String = DEFAULT_THEME,
+    /** Id akcentu w obrębie motywu; nieznany = domyślny akcent motywu. */
     val accent: String = DEFAULT_ACCENT,
+    /** Każdy kafelek w kolejnym kolorze motywu zamiast jednego akcentu. */
+    val rainbow: Boolean = false,
+    /** Czarne tło zamiast tła motywu (AMOLED). */
+    val amoledBlack: Boolean = false,
     val autoLaunchSingleMatch: Boolean = true,
     val hiddenApps: List<AppKey> = emptyList(),
     val aliases: List<AppAlias> = emptyList(),
@@ -67,6 +73,7 @@ data class LauncherConfig(
         aliases.firstOrNull { it.packageName == packageName && it.userSerial == userSerial }?.label
 
     companion object {
+        const val DEFAULT_THEME = "metro"
         const val DEFAULT_ACCENT = "cobalt"
     }
 }

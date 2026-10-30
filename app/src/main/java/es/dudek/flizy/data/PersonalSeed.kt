@@ -8,17 +8,21 @@ package es.dudek.flizy.data
  * zamieniany w czasie działania na numer seryjny profilu.
  */
 object PersonalSeed {
-    const val VERSION = 1
+    const val VERSION = 2
 
     /** [className] null = pierwsza aktywność launchera z pakietu. */
     data class App(val packageName: String, val className: String?, val userId: Int)
 
-    data class SeedTile(val app: App, val size: TileSize)
+    /** [since] = wersja konfiguracji, w której pozycja doszła (do uzupełniania istniejących instalacji). */
+    data class SeedTile(val app: App, val size: TileSize, val since: Int = 1)
 
-    data class SeedAlias(val packageName: String, val userId: Int, val label: String)
+    data class SeedAlias(val packageName: String, val userId: Int, val label: String, val since: Int = 1)
 
     private const val MAIN = 0
     private const val WORK = 11
+
+    /** MIUI "Podwójne aplikacje" (XSpace) - profil klonów. */
+    private const val CLONE = 999
 
     val tiles = listOf(
         SeedTile(App("com.google.android.calendar", "com.android.calendar.AllInOneActivity", WORK), TileSize.TWO_THIRDS),
@@ -27,6 +31,7 @@ object PersonalSeed {
         SeedTile(App("com.darkempire78.opencalculator", "com.darkempire78.opencalculator.activities.MainActivity", MAIN), TileSize.THIRD),
         SeedTile(App("com.google.android.gm", "com.google.android.gm.ConversationListActivityGmail", MAIN), TileSize.THIRD),
         SeedTile(App("com.whatsapp", "com.whatsapp.Main", MAIN), TileSize.THIRD),
+        SeedTile(App("com.whatsapp", "com.whatsapp.Main", CLONE), TileSize.THIRD, since = 2),
         SeedTile(App("com.google.android.gm", "com.google.android.gm.ConversationListActivityGmail", WORK), TileSize.THIRD),
         SeedTile(App("com.google.android.apps.maps", "com.google.android.maps.MapsActivity", MAIN), TileSize.TWO_THIRDS),
         SeedTile(App("pl.inko.infopigulaOne", "pl.inko.infopigulaOne.MainActivity", MAIN), TileSize.THIRD),
@@ -71,5 +76,7 @@ object PersonalSeed {
         SeedAlias("com.google.android.apps.docs", WORK, "AVS Drive"),
         SeedAlias("com.miui.gallery", MAIN, "Xiaomi Gallery"),
         SeedAlias("com.miui.calculator", MAIN, "Xiaomi Calculator"),
+        SeedAlias("com.whatsapp", MAIN, "WhatsApp priv", since = 2),
+        SeedAlias("com.whatsapp", CLONE, "WhatsApp praca", since = 2),
     )
 }

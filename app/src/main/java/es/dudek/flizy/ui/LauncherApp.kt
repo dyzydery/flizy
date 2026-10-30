@@ -41,7 +41,9 @@ import es.dudek.flizy.ui.settings.SettingsScreen
 import es.dudek.flizy.ui.start.StartScreen
 import es.dudek.flizy.ui.theme.LocalAccent
 import es.dudek.flizy.ui.theme.Metro
-import es.dudek.flizy.ui.theme.accentById
+import es.dudek.flizy.ui.theme.FlizyColors
+import es.dudek.flizy.ui.theme.LocalColors
+import es.dudek.flizy.ui.theme.themeById
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
@@ -167,7 +169,9 @@ fun LauncherApp(
         }
     }
 
-    CompositionLocalProvider(LocalAccent provides accentById(cfg.accent).color) {
+    val theme = themeById(cfg.theme)
+    val colors = FlizyColors(theme, theme.accent(cfg.accent).color, cfg.rainbow, cfg.amoledBlack)
+    CompositionLocalProvider(LocalColors provides colors, LocalAccent provides colors.accent) {
         Box(Modifier.fillMaxSize().background(Metro.Background)) {
             HorizontalPager(state = pager, beyondViewportPageCount = 1, modifier = Modifier.fillMaxSize()) { page ->
                 when (page) {
@@ -209,6 +213,9 @@ fun LauncherApp(
                         config = cfg,
                         isDefaultLauncher = isDefaultLauncher,
                         onAccent = vm::setAccent,
+                        onTheme = vm::setTheme,
+                        onRainbow = vm::setRainbow,
+                        onAmoledBlack = vm::setAmoledBlack,
                         onAutoLaunch = vm::setAutoLaunch,
                         onSetDefault = onSetDefaultLauncher,
                         onEditTiles = { push(Screen.EditTiles) },

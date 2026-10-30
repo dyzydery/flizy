@@ -56,6 +56,7 @@ import es.dudek.flizy.ui.components.AppIcon
 import es.dudek.flizy.ui.components.PageHeader
 import es.dudek.flizy.ui.components.metroPressable
 import es.dudek.flizy.ui.theme.LocalAccent
+import es.dudek.flizy.ui.theme.LocalColors
 import es.dudek.flizy.ui.theme.Metro
 import es.dudek.flizy.ui.theme.MetroText
 import es.dudek.flizy.util.matchScore
@@ -201,7 +202,7 @@ private fun SearchField(value: String, onValueChange: (String) -> Unit, onGo: ()
         value = value,
         onValueChange = onValueChange,
         singleLine = true,
-        textStyle = MetroText.Body.copy(color = Color.Black, fontSize = 19.sp),
+        textStyle = MetroText.Body.copy(color = Metro.Background, fontSize = 19.sp),
         cursorBrush = SolidColor(accent),
         keyboardOptions = KeyboardOptions(
             capitalization = KeyboardCapitalization.None,
@@ -214,11 +215,14 @@ private fun SearchField(value: String, onValueChange: (String) -> Unit, onGo: ()
             Box(
                 Modifier
                     .fillMaxWidth()
-                    .background(if (focused) Color.White else Color(0xFFCCCCCC))
+                    .background(if (focused) Metro.Foreground else Metro.Subtle)
                     .padding(horizontal = 10.dp, vertical = 9.dp),
             ) {
                 if (value.isEmpty()) {
-                    BasicText(stringResource(R.string.search_hint), style = MetroText.Body.copy(color = Color(0xFF666666), fontSize = 19.sp))
+                    BasicText(
+                        stringResource(R.string.search_hint),
+                        style = MetroText.Body.copy(color = Metro.Background.copy(alpha = 0.55f), fontSize = 19.sp),
+                    )
                 }
                 inner()
             }
@@ -229,10 +233,11 @@ private fun SearchField(value: String, onValueChange: (String) -> Unit, onGo: ()
 /** Nagłówek litery jak w WP: mała litera w kwadracie w kolorze akcentu. */
 @Composable
 private fun LetterHeader(letter: Char) {
-    Box(Modifier.padding(top = 10.dp, bottom = 6.dp).size(46.dp).background(LocalAccent.current)) {
+    val accent = LocalAccent.current
+    Box(Modifier.padding(top = 10.dp, bottom = 6.dp).size(46.dp).background(accent)) {
         BasicText(
             letter.toString(),
-            style = MetroText.Item.copy(fontSize = 26.sp),
+            style = MetroText.Item.copy(fontSize = 26.sp, color = LocalColors.current.inkOn(accent)),
             modifier = Modifier.align(Alignment.BottomStart).padding(start = 5.dp, bottom = 1.dp),
         )
     }

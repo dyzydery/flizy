@@ -26,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -46,6 +47,7 @@ import es.dudek.flizy.ui.components.PageHeader
 import es.dudek.flizy.ui.components.plainClickable
 import es.dudek.flizy.ui.components.rememberMonoIcon
 import es.dudek.flizy.ui.theme.LocalAccent
+import es.dudek.flizy.ui.theme.LocalColors
 import es.dudek.flizy.ui.theme.Metro
 import es.dudek.flizy.ui.theme.MetroText
 
@@ -105,6 +107,7 @@ fun EditTilesScreen(
                 val dragged = key == draggedKey
                 EditRow(
                     tile = tile,
+                    index = tiles.indexOfFirst { it.app.key == key }.coerceAtLeast(0),
                     icons = icons,
                     canMoveUp = order.firstOrNull() != tile,
                     canMoveDown = order.lastOrNull() != tile,
@@ -140,6 +143,7 @@ fun EditTilesScreen(
 @Composable
 private fun EditRow(
     tile: Tile,
+    index: Int,
     icons: IconLoader,
     canMoveUp: Boolean,
     canMoveDown: Boolean,
@@ -150,13 +154,17 @@ private fun EditRow(
     handleModifier: Modifier = Modifier,
 ) {
     val accent = LocalAccent.current
+    val colors = LocalColors.current
+    val tileColor = colors.tileColor(index)
     val mono = rememberMonoIcon(tile.app, icons)
     Row(modifier.fillMaxWidth().height(RowHeight), verticalAlignment = Alignment.CenterVertically) {
         Box(handleModifier.size(width = 36.dp, height = RowHeight), contentAlignment = Alignment.CenterStart) {
             BasicText("≡", style = MetroText.Item.copy(fontSize = 28.sp, color = Metro.Subtle))
         }
-        Box(Modifier.size(52.dp).background(accent), contentAlignment = Alignment.Center) {
-            mono?.let { Image(it, contentDescription = null, modifier = Modifier.size(26.dp)) }
+        Box(Modifier.size(52.dp).background(tileColor), contentAlignment = Alignment.Center) {
+            mono?.let {
+                Image(it, contentDescription = null, colorFilter = ColorFilter.tint(colors.inkOn(tileColor)), modifier = Modifier.size(26.dp))
+            }
         }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {

@@ -8,6 +8,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.UserHandle
 import android.os.UserManager
+import android.util.Log
 import es.dudek.flizy.util.normalizeForSearch
 import es.dudek.flizy.util.searchWords
 import kotlinx.coroutines.CoroutineScope
@@ -115,6 +116,7 @@ class AppRepository(context: Context, private val scope: CoroutineScope) {
 
     private fun loadApps(): List<AppEntry> =
         launcherApps.profiles
+            .also { profiles -> Log.d("Flizy", "Profile: " + profiles.joinToString { "$it serial=${userSerial(it)}" }) }
             .flatMap { user ->
                 val serial = userSerial(user)
                 launcherApps.getActivityList(null, user).map { info ->

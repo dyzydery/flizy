@@ -34,6 +34,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -53,7 +55,7 @@ import es.dudek.flizy.data.TileSize
 import es.dudek.flizy.ui.components.metroPressable
 import es.dudek.flizy.ui.components.plainClickable
 import es.dudek.flizy.ui.components.rememberMonoIcon
-import es.dudek.flizy.ui.theme.LocalAccent
+import es.dudek.flizy.ui.theme.LocalColors
 import es.dudek.flizy.ui.theme.Metro
 import es.dudek.flizy.ui.theme.MetroText
 import kotlinx.coroutines.delay
@@ -105,6 +107,8 @@ fun StartScreen(
     modifier: Modifier = Modifier,
 ) {
     val rows = remember(tiles) { packTiles(tiles) }
+    val positions = remember(tiles) { tiles.withIndex().associate { (i, t) -> t.app.key to i } }
+    val colors = LocalColors.current
     BoxWithConstraints(modifier.fillMaxSize().background(Metro.Background)) {
         // Siatka 12 kolumn z odstępem między każdą: kafelek k kolumn = k*kolumna + (k-1)*odstęp,
         // dzięki czemu kafelki w różnych rzędach wyrównują się co do piksela.
@@ -135,7 +139,14 @@ fun StartScreen(
             items(rows, key = { it.key }) { row ->
                 Row(Modifier.fillMaxWidth().height(rowHeight), horizontalArrangement = Arrangement.spacedBy(TileGap)) {
                     row.tiles.forEach { tile ->
-                        TileView(tile, icons, Modifier.width(widthOf(tile.config.size.columns)).fillMaxHeight(), onLaunch, onTileLongPress)
+                        TileView(
+                            tile = tile,
+                            icons = icons,
+                            color = colors.tileColor(positions[tile.app.key] ?: 0),
+                            modifier = Modifier.width(widthOf(tile.config.size.columns)).fillMaxHeight(),
+                            onLaunch = onLaunch,
+                            onLongPress = onTileLongPress,
+                        )
                     }
                 }
             }
@@ -194,6 +205,7 @@ private fun ClockHeader(onClockClick: () -> Unit, onDateClick: () -> Unit) {
 private fun TileView(
     tile: Tile,
     icons: IconLoader,
+    color: Color,
     modifier: Modifier,
     onLaunch: (Tile) -> Unit,
     onLongPress: (Tile, Float) -> Unit,
@@ -205,18 +217,20 @@ private fun TileView(
         modifier
             .onGloballyPositioned { bottom = it.boundsInRoot().bottom }
             .metroPressable(onLongClick = { onLongPress(tile, bottom) }, onClick = { onLaunch(tile) })
-            .background(LocalAccent.current),
+            .background(color),
     ) {
+        val ink = LocalColors.current.inkOn(color)
         mono?.let {
             Image(
                 it,
                 contentDescription = null,
+                colorFilter = ColorFilter.tint(ink),
                 modifier = Modifier.align(Alignment.Center).fillMaxHeight(0.4f).aspectRatio(1f),
             )
         }
         BasicText(
             tile.app.label,
-            style = MetroText.TileLabel.copy(fontSize = if (narrow) 11.sp else 12.sp),
+            style = MetroText.TileLabel.copy(color = ink, fontSize = if (narrow) 11.sp else 12.sp),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.align(Alignment.BottomStart).padding(start = 6.dp, end = 6.dp, bottom = 4.dp),

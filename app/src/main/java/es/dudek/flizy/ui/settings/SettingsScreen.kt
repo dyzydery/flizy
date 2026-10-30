@@ -32,14 +32,19 @@ import es.dudek.flizy.ui.components.SettingRow
 import es.dudek.flizy.ui.components.plainClickable
 import es.dudek.flizy.ui.theme.Metro
 import es.dudek.flizy.ui.theme.MetroText
-import es.dudek.flizy.ui.theme.WpAccents
-import es.dudek.flizy.ui.theme.accentById
+import es.dudek.flizy.ui.theme.Accent
+import es.dudek.flizy.ui.theme.FlizyTheme
+import es.dudek.flizy.ui.theme.Themes
+import es.dudek.flizy.ui.theme.themeById
 
 @Composable
 fun SettingsScreen(
     config: LauncherConfig,
     isDefaultLauncher: Boolean,
     onAccent: (String) -> Unit,
+    onTheme: (String) -> Unit,
+    onRainbow: (Boolean) -> Unit,
+    onAmoledBlack: (Boolean) -> Unit,
     onAutoLaunch: (Boolean) -> Unit,
     onSetDefault: () -> Unit,
     onEditTiles: () -> Unit,
@@ -54,9 +59,29 @@ fun SettingsScreen(
     ) {
         PageHeader(stringResource(R.string.settings_title))
         Column(Modifier.padding(horizontal = 20.dp, vertical = 12.dp)) {
+            val theme = themeById(config.theme)
+            val accent = theme.accent(config.accent)
+
+            SectionTitle(stringResource(R.string.settings_theme))
+            Themes.forEach { t ->
+                ThemeRow(t, selected = t.id == theme.id) { onTheme(t.id) }
+            }
+            SettingRow(
+                title = stringResource(R.string.settings_amoled),
+                description = stringResource(R.string.settings_amoled_desc),
+            ) {
+                MetroToggle(config.amoledBlack, onCheckedChange = onAmoledBlack)
+            }
+
             SectionTitle(stringResource(R.string.settings_accent))
-            BasicText(accentById(config.accent).name, style = MetroText.Body, modifier = Modifier.padding(bottom = 10.dp))
-            AccentGrid(selected = config.accent, onSelect = onAccent)
+            SettingRow(
+                title = stringResource(R.string.settings_rainbow),
+                description = stringResource(R.string.settings_rainbow_desc),
+            ) {
+                MetroToggle(config.rainbow, onCheckedChange = onRainbow)
+            }
+            BasicText(accent.name, style = MetroText.Body, modifier = Modifier.padding(top = 8.dp, bottom = 10.dp))
+            AccentGrid(theme.accents, selected = accent.id, onSelect = onAccent)
 
             SectionTitle(stringResource(R.string.settings_search))
             SettingRow(
@@ -98,9 +123,9 @@ private fun SectionTitle(text: String) {
 }
 
 @Composable
-private fun AccentGrid(selected: String, onSelect: (String) -> Unit) {
+private fun AccentGrid(accents: List<Accent>, selected: String, onSelect: (String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        WpAccents.chunked(5).forEach { row ->
+        accents.chunked(5).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 row.forEach { accent ->
                     Box(
@@ -114,6 +139,30 @@ private fun AccentGrid(selected: String, onSelect: (String) -> Unit) {
                             .plainClickable { onSelect(accent.id) },
                     )
                 }
+                // Niepełny ostatni rząd: puste miejsca, żeby próbki miały ten sam rozmiar.
+                repeat(5 - row.size) { Spacer(Modifier.weight(1f)) }
+            }
+        }
+    }
+}
+
+/** Motyw: nazwa i pasek próbek na jego własnym tle; wybrany obramowany. */
+@Composable
+private fun ThemeRow(theme: FlizyTheme, selected: Boolean, onClick: () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .then(if (selected) Modifier.border(2.dp, Metro.Foreground) else Modifier)
+            .background(theme.background)
+            .plainClickable(onClick = onClick)
+            .padding(10.dp),
+    ) {
+        BasicText(theme.name, style = MetroText.Body.copy(color = theme.text))
+        Spacer(Modifier.height(6.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+            theme.accents.take(10).forEach {
+                Box(Modifier.weight(1f).height(14.dp).background(it.color))
             }
         }
     }

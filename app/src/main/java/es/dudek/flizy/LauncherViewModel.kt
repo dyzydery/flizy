@@ -29,6 +29,7 @@ import es.dudek.flizy.data.TileConfig
 import es.dudek.flizy.data.TileSize
 import es.dudek.flizy.data.launcherConfigStore
 import es.dudek.flizy.data.sortedByLabel
+import es.dudek.flizy.ui.theme.themeById
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -104,7 +105,19 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
 
     fun launch(app: AppEntry, sourceBounds: Rect? = null) {
         try {
-            launcherApps.startMainActivity(app.component, app.user, sourceBounds, null)
+            if (app.user == Process.myUserHandle()) {
+                // Bezpośrednio, z flagą MIUI: inaczej przy aplikacji z kopią w "Podwójnych aplikacjach"
+                // system pokazuje okno wyboru profilu.
+                val intent = Intent(Intent.ACTION_MAIN)
+                    .addCategory(Intent.CATEGORY_LAUNCHER)
+                    .setComponent(app.component)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
+                    .putExtra(EXTRA_MIUI_XSPACE_AUTHORIZED, true)
+                intent.sourceBounds = sourceBounds
+                context.startActivity(intent)
+            } else {
+                launcherApps.startMainActivity(app.component, app.user, sourceBounds, null)
+            }
         } catch (e: Exception) {
             Log.w(TAG, "Nie udało się uruchomić ${app.component}", e)
             Toast.makeText(context, context.getString(R.string.launch_failed, app.label), Toast.LENGTH_SHORT).show()
@@ -211,6 +224,13 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
 
     fun setAccent(id: String) = update { it.copy(accent = id) }
 
+    /** Zmiana motywu przywraca jego domyślny akcent (id akcentów są różne w motywach). */
+    fun setTheme(id: String) = update { it.copy(theme = id, accent = themeById(id).defaultAccent) }
+
+    fun setRainbow(enabled: Boolean) = update { it.copy(rainbow = enabled) }
+
+    fun setAmoledBlack(enabled: Boolean) = update { it.copy(amoledBlack = enabled) }
+
     fun setAutoLaunch(enabled: Boolean) = update { it.copy(autoLaunchSingleMatch = enabled) }
 
 
@@ -221,7 +241,8 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
      * nie ma (inny telefon), kafelki z domyślnych aplikacji systemu.
      */
     private suspend fun applySeedOnce() {
-        if (store.data.first().seedVersion >= PersonalSeed.VERSION) return
+        val applied = store.data.first().seedVersion
+        if (applied >= PersonalSeed.VERSION) return
         val apps = repository.apps.filterNotNull().first()
         val serials = HashMap<Int, Long?>()
         fun serial(userId: Int) = serials.getOrPut(userId) { repository.serialForUserId(userId) }
@@ -233,21 +254,39 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
             return candidates.firstOrNull { it.key.className == app.className } ?: candidates.firstOrNull()
         }
 
-        val seededTiles = PersonalSeed.tiles.mapNotNull { seed ->
-            resolve(seed.app)?.let { TileConfig(it.key.packageName, it.key.className, it.key.userSerial, seed.size) }
-        }.distinctBy { it.key }
-        val tiles = seededTiles.ifEmpty { defaultTiles(apps) }
-        val hidden = PersonalSeed.hidden.mapNotNull { h ->
+        // Pierwsze uruchomienie: całość. Później: tylko pozycje dodane w nowszych wersjach,
+        // żeby nie nadpisać zmian zrobionych ręcznie.
+        val fresh = applied == 0
+        fun <T> newer(items: List<T>, since: (T) -> Int) = if (fresh) items else items.filter { since(it) > applied }
+
+        val seededTiles = newer(PersonalSeed.tiles) { it.since }.mapNotNull { seed ->
+            resolve(seed.app)?.let { seed to TileConfig(it.key.packageName, it.key.className, it.key.userSerial, seed.size) }
+        }
+        val hidden = newer(PersonalSeed.hidden) { 1 }.mapNotNull { h ->
             resolve(h)?.key ?: serial(h.userId)?.let { AppKey(h.packageName, h.className ?: return@let null, it) }
         }
-        val aliases = PersonalSeed.aliases.mapNotNull { a -> serial(a.userId)?.let { AppAlias(a.packageName, it, a.label) } }
+        val aliases = newer(PersonalSeed.aliases) { it.since }
+            .mapNotNull { a -> serial(a.userId)?.let { AppAlias(a.packageName, it, a.label) } }
 
         store.updateData { c ->
-            if (c.seedVersion >= PersonalSeed.VERSION) c
-            else c.copy(
+            if (c.seedVersion >= PersonalSeed.VERSION) return@updateData c
+            val tiles = if (fresh) {
+                seededTiles.map { it.second }.distinctBy { it.key }.ifEmpty { defaultTiles(apps) }
+            } else {
+                // Nowy kafelek ląduje za kafelkiem tej samej aplikacji, jeśli taki jest.
+                seededTiles.fold(c.tiles) { acc, (_, tile) ->
+                    if (acc.any { it.key == tile.key }) acc
+                    else {
+                        val after = acc.indexOfLast { it.packageName == tile.packageName }
+                        acc.toMutableList().apply { add(if (after >= 0) after + 1 else size, tile) }
+                    }
+                }
+            }
+            val newKeys = aliases.map { it.packageName to it.userSerial }.toSet()
+            c.copy(
                 tiles = tiles,
                 hiddenApps = (c.hiddenApps + hidden).distinct(),
-                aliases = c.aliases + aliases.filter { a -> c.aliasFor(a.packageName, a.userSerial) == null },
+                aliases = c.aliases.filterNot { (it.packageName to it.userSerial) in newKeys } + aliases,
                 seedVersion = PersonalSeed.VERSION,
             )
         }
@@ -278,5 +317,8 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
     private companion object {
         const val TAG = "Flizy"
         const val GOOGLE_CALENDAR = "com.google.android.calendar"
+
+        /** Flaga launchera MIUI: uruchom w bieżącym profilu bez okna wyboru XSpace. */
+        const val EXTRA_MIUI_XSPACE_AUTHORIZED = "android.intent.extra.auth_to_call_xspace"
     }
 }

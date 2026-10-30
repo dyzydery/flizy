@@ -53,7 +53,12 @@
 
     <!-- Ustawienia -->
     <string name="settings_title">ustawienia</string>
+    <string name="settings_theme">Motyw</string>
+    <string name="settings_amoled">Czarne tło</string>
+    <string name="settings_amoled_desc">Czysta czerń zamiast tła motywu: mniej poświaty i oszczędność baterii na ekranie AMOLED.</string>
     <string name="settings_accent">Kolor akcentu</string>
+    <string name="settings_rainbow">Kafelki w kolorach tęczy</string>
+    <string name="settings_rainbow_desc">Każdy kafelek w kolejnym kolorze motywu. Akcent nadal koloruje nagłówki i przełączniki.</string>
     <string name="settings_search">Wyszukiwanie</string>
     <string name="settings_auto_launch">Uruchamiaj od razu przy jednym dopasowaniu</string>
     <string name="settings_auto_launch_desc">Gdy w wyszukiwarce zostanie dokładnie jedna aplikacja, otwórz ją bez stukania.</string>

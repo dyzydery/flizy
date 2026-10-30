@@ -88,13 +88,13 @@ fun RenameDialog(
                 value = value,
                 onValueChange = { value = it },
                 singleLine = true,
-                textStyle = MetroText.Body.copy(color = Color.Black, fontSize = 19.sp),
+                textStyle = MetroText.Body.copy(color = Metro.Background, fontSize = 19.sp),
                 cursorBrush = SolidColor(LocalAccent.current),
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { save() }),
                 modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
                 decorationBox = { inner ->
-                    Box(Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 10.dp, vertical = 9.dp)) { inner() }
+                    Box(Modifier.fillMaxWidth().background(Metro.Foreground).padding(horizontal = 10.dp, vertical = 9.dp)) { inner() }
                 },
             )
             Spacer(Modifier.height(8.dp))

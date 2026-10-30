@@ -134,6 +134,7 @@ fun MetroToggle(checked: Boolean, modifier: Modifier = Modifier, onCheckedChange
             .padding(4.dp),
     ) {
         Box(Modifier.fillMaxSize().background(if (checked) accent else Color.Transparent))
+
         Box(
             Modifier
                 .offset { IntOffset(((58 - 8 - 14).dp.toPx() * position).toInt(), 0) }
