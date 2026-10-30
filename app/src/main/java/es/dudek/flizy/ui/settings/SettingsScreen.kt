@@ -43,6 +43,8 @@ fun SettingsScreen(
     onAutoLaunch: (Boolean) -> Unit,
     onSetDefault: () -> Unit,
     onEditTiles: () -> Unit,
+    hiddenCount: Int,
+    onManageHidden: () -> Unit,
 ) {
     Column(
         Modifier
@@ -71,6 +73,14 @@ fun SettingsScreen(
                 modifier = Modifier.padding(bottom = 10.dp),
             )
             MetroButton(stringResource(R.string.settings_set_default), onClick = onSetDefault)
+
+            SectionTitle(stringResource(R.string.settings_hidden))
+            BasicText(
+                stringResource(R.string.settings_hidden_count, hiddenCount),
+                style = MetroText.Body,
+                modifier = Modifier.padding(bottom = 10.dp),
+            )
+            MetroButton(stringResource(R.string.settings_hidden_manage), onClick = onManageHidden)
 
             SectionTitle(stringResource(R.string.settings_tiles))
             MetroButton(stringResource(R.string.settings_edit_tiles), onClick = onEditTiles)

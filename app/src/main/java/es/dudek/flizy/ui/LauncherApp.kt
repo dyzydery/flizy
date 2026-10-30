@@ -32,8 +32,10 @@ import es.dudek.flizy.Tile
 import es.dudek.flizy.data.AppEntry
 import es.dudek.flizy.data.TileSize
 import es.dudek.flizy.ui.apps.AppListScreen
+import es.dudek.flizy.ui.apps.HiddenAppsScreen
 import es.dudek.flizy.ui.components.MenuItem
 import es.dudek.flizy.ui.components.MetroContextMenu
+import es.dudek.flizy.ui.components.RenameDialog
 import es.dudek.flizy.ui.edit.EditTilesScreen
 import es.dudek.flizy.ui.settings.SettingsScreen
 import es.dudek.flizy.ui.start.StartScreen
@@ -46,7 +48,7 @@ import kotlinx.coroutines.launch
 private class MenuRequest(val anchorBottomPx: Float, val items: List<MenuItem>)
 
 /** Ekrany otwierane nad pagerem Start/Aplikacje. */
-private enum class Screen { Settings, EditTiles, AddTile }
+private enum class Screen { Settings, EditTiles, AddTile, HiddenApps }
 
 private const val PAGE_START = 0
 private const val PAGE_APPS = 1
@@ -67,6 +69,7 @@ fun LauncherApp(
     val apps by vm.apps.collectAsStateWithLifecycle()
     val pinned by vm.pinnedKeys.collectAsStateWithLifecycle()
     val tiles by vm.tiles.collectAsStateWithLifecycle()
+    val hiddenApps by vm.hiddenApps.collectAsStateWithLifecycle()
 
     val cfg = config ?: run {
         Box(Modifier.fillMaxSize().background(Metro.Background))
@@ -79,6 +82,7 @@ fun LauncherApp(
     val startList = rememberLazyListState()
     var menu by remember { mutableStateOf<MenuRequest?>(null) }
     var screens by remember { mutableStateOf(emptyList<Screen>()) }
+    var renaming by remember { mutableStateOf<AppEntry?>(null) }
 
     val pinLabel = stringResource(R.string.menu_pin)
     val unpinLabel = stringResource(R.string.menu_unpin)
@@ -87,6 +91,8 @@ fun LauncherApp(
     val wideLabel = stringResource(R.string.menu_resize_wide)
     val mediumLabel = stringResource(R.string.menu_resize_medium)
     val editLabel = stringResource(R.string.menu_edit_tiles)
+    val renameLabel = stringResource(R.string.menu_rename)
+    val hideLabel = stringResource(R.string.menu_hide)
 
     fun push(screen: Screen) {
         keyboard?.hide()
@@ -104,6 +110,8 @@ fun LauncherApp(
             anchor,
             listOf(
                 if (isPinned) MenuItem(unpinLabel) { vm.unpin(app.key) } else MenuItem(pinLabel) { vm.pin(app) },
+                MenuItem(renameLabel) { renaming = app },
+                MenuItem(hideLabel) { vm.hide(app.key) },
                 MenuItem(infoLabel) { vm.openAppInfo(app) },
                 MenuItem(uninstallLabel) { vm.uninstall(app) },
             ),
@@ -116,6 +124,7 @@ fun LauncherApp(
             anchor,
             listOf(
                 MenuItem(if (wide) mediumLabel else wideLabel) { vm.toggleTileSize(tile.app.key) },
+                MenuItem(renameLabel) { renaming = tile.app },
                 MenuItem(unpinLabel) { vm.unpin(tile.app.key) },
                 MenuItem(editLabel) { push(Screen.EditTiles) },
             ),
@@ -125,6 +134,7 @@ fun LauncherApp(
     LaunchedEffect(Unit) {
         homeEvents.collect { alreadyOnHome ->
             menu = null
+            renaming = null
             when {
                 !alreadyOnHome -> {
                     screens = emptyList()
@@ -190,7 +200,10 @@ fun LauncherApp(
                         onAutoLaunch = vm::setAutoLaunch,
                         onSetDefault = onSetDefaultLauncher,
                         onEditTiles = { push(Screen.EditTiles) },
+                        hiddenCount = hiddenApps.size,
+                        onManageHidden = { push(Screen.HiddenApps) },
                     )
+                    Screen.HiddenApps -> HiddenAppsScreen(hiddenApps, vm.icons, onUnhide = { vm.unhide(it.key) })
                     Screen.EditTiles -> EditTilesScreen(
                         tiles = tiles,
                         icons = vm.icons,
@@ -215,6 +228,14 @@ fun LauncherApp(
             }
 
             menu?.let { m -> MetroContextMenu(m.anchorBottomPx, m.items, onDismiss = { menu = null }) }
+            renaming?.let { app ->
+                RenameDialog(
+                    currentLabel = app.label,
+                    originalLabel = app.originalLabel,
+                    onSave = { vm.rename(app, it) },
+                    onDismiss = { renaming = null },
+                )
+            }
         }
     }
 }

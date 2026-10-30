@@ -20,10 +20,12 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
 import java.text.Collator
 import java.util.Locale
 
 /** Identyfikator aplikacji niezależny od procesu: komponent + numer seryjny profilu użytkownika. */
+@Serializable
 data class AppKey(val packageName: String, val className: String, val userSerial: Long)
 
 class AppEntry(
@@ -31,7 +33,11 @@ class AppEntry(
     val label: String,
     val user: UserHandle,
     val info: LauncherActivityInfo,
+    /** Nazwa nadana przez aplikację, przed zastosowaniem aliasu. */
+    val originalLabel: String = label,
 ) {
+    fun withLabel(newLabel: String) = AppEntry(key, newLabel, user, info, originalLabel)
+
     val component: ComponentName get() = info.componentName
     val searchName: String = label.normalizeForSearch()
     val searchWords: List<String> = searchName.searchWords()
@@ -46,10 +52,6 @@ data class PackageEvent(val packageName: String, val user: UserHandle, val remov
 class AppRepository(context: Context, private val scope: CoroutineScope) {
     private val launcherApps = context.getSystemService(LauncherApps::class.java)
     private val userManager = context.getSystemService(UserManager::class.java)
-    private val collator = Collator.getInstance(Locale.forLanguageTag("pl")).apply {
-        strength = Collator.SECONDARY
-    }
-
     private val _apps = MutableStateFlow<List<AppEntry>?>(null)
 
     /** null do czasu pierwszego wczytania. */
@@ -97,6 +99,11 @@ class AppRepository(context: Context, private val scope: CoroutineScope) {
 
     fun userForSerial(serial: Long): UserHandle? = userManager.getUserForSerialNumber(serial)
 
+    /** Numer seryjny profilu o danym identyfikatorze (0 = główny, np. 11 = profil służbowy); null, gdy go nie ma. */
+    fun serialForUserId(userId: Int): Long? =
+        userManager.getSerialNumberForUser(UserHandle.getUserHandleForUid(userId * PER_USER_RANGE))
+            .takeIf { it >= 0 }
+
     /** Instalacja często generuje kilka zdarzeń pod rząd - zbieramy je w jedno przeładowanie. */
     private fun requestReload(debounce: Boolean = true) {
         reloadJob?.cancel()
@@ -119,5 +126,17 @@ class AppRepository(context: Context, private val scope: CoroutineScope) {
                     )
                 }
             }
-            .sortedWith { a, b -> collator.compare(a.label, b.label) }
+            .sortedByLabel()
+
+    private companion object {
+        /** Zakres UID na użytkownika (UserHandle.PER_USER_RANGE, ukryte w SDK). */
+        const val PER_USER_RANGE = 100_000
+    }
 }
+
+private val collator = Collator.getInstance(Locale.forLanguageTag("pl")).apply {
+    strength = Collator.SECONDARY
+}
+
+/** Alfabetycznie wg polskich reguł (Ł po L, Ś po S itd.). */
+fun List<AppEntry>.sortedByLabel(): List<AppEntry> = sortedWith { a, b -> collator.compare(a.label, b.label) }

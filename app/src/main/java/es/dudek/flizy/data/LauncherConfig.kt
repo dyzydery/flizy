@@ -27,13 +27,27 @@ data class TileConfig(
     val key: AppKey get() = AppKey(packageName, className, userSerial)
 }
 
+/** Własna nazwa aplikacji, wspólna dla listy A-Z i kafelka. */
+@Serializable
+data class AppAlias(
+    val packageName: String,
+    val userSerial: Long,
+    val label: String,
+)
+
 @Serializable
 data class LauncherConfig(
     val tiles: List<TileConfig> = emptyList(),
     val accent: String = DEFAULT_ACCENT,
     val autoLaunchSingleMatch: Boolean = true,
-    val defaultTilesApplied: Boolean = false,
+    val hiddenApps: List<AppKey> = emptyList(),
+    val aliases: List<AppAlias> = emptyList(),
+    /** Wersja zastosowanej konfiguracji startowej ([PersonalSeed]); 0 = jeszcze nie zastosowana. */
+    val seedVersion: Int = 0,
 ) {
+    fun aliasFor(packageName: String, userSerial: Long): String? =
+        aliases.firstOrNull { it.packageName == packageName && it.userSerial == userSerial }?.label
+
     companion object {
         const val DEFAULT_ACCENT = "cobalt"
     }

@@ -14,6 +14,20 @@
     <string name="menu_unpin">odepnij od startu</string>
     <string name="menu_app_info">informacje o aplikacji</string>
     <string name="menu_uninstall">odinstaluj</string>
+    <string name="menu_rename">zmień nazwę</string>
+    <string name="menu_hide">ukryj</string>
+
+    <!-- Zmiana nazwy -->
+    <string name="rename_title">zmień nazwę</string>
+    <string name="rename_hint">Puste pole przywraca nazwę „%1$s”.</string>
+    <string name="rename_save">zapisz</string>
+    <string name="rename_cancel">anuluj</string>
+
+    <!-- Ukryte aplikacje -->
+    <string name="hidden_title">ukryte</string>
+    <string name="hidden_hint">Stuknij aplikację, aby przywrócić ją na listę.</string>
+    <string name="hidden_empty">Nie ma ukrytych aplikacji.</string>
+    <string name="hidden_show">pokaż</string>
 
     <!-- Start -->
     <string name="start_empty">Brak kafelków. Przytrzymaj puste miejsce albo przesuń w lewo, aby przypiąć aplikacje.</string>
@@ -46,6 +60,9 @@
     <string name="settings_set_default">Ustaw jako domyślny launcher</string>
     <string name="settings_is_default">Flizy jest domyślnym launcherem.</string>
     <string name="settings_not_default">Flizy nie jest domyślnym launcherem.</string>
+    <string name="settings_hidden">Ukryte aplikacje</string>
+    <string name="settings_hidden_count">Ukrytych aplikacji: %1$d</string>
+    <string name="settings_hidden_manage">Zarządzaj ukrytymi</string>
     <string name="settings_tiles">Kafelki</string>
     <string name="settings_edit_tiles">Edytuj kafelki</string>
     <string name="settings_about">Flizy %1$s · font Selawik (SIL OFL 1.1)</string>

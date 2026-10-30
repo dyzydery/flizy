@@ -15,14 +15,17 @@ import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import es.dudek.flizy.data.AppAlias
 import es.dudek.flizy.data.AppEntry
 import es.dudek.flizy.data.AppKey
 import es.dudek.flizy.data.AppRepository
 import es.dudek.flizy.data.IconLoader
 import es.dudek.flizy.data.LauncherConfig
+import es.dudek.flizy.data.PersonalSeed
 import es.dudek.flizy.data.TileConfig
 import es.dudek.flizy.data.TileSize
 import es.dudek.flizy.data.launcherConfigStore
+import es.dudek.flizy.data.sortedByLabel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -45,9 +48,25 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
     /** null do czasu wczytania z DataStore. */
     val config: StateFlow<LauncherConfig?> = store.data.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    val apps: StateFlow<List<AppEntry>?> = repository.apps
+    /** Wszystkie aplikacje z nałożonymi aliasami (także ukryte - mogą być przypięte). */
+    private val labeledApps: StateFlow<List<AppEntry>?> = combine(repository.apps, store.data) { apps, config ->
+        apps?.map { app ->
+            config.aliasFor(app.key.packageName, app.key.userSerial)?.let(app::withLabel) ?: app
+        }?.sortedByLabel()
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    val tiles: StateFlow<List<Tile>> = combine(store.data, repository.apps) { config, apps ->
+    /** Lista A-Z: bez ukrytych. */
+    val apps: StateFlow<List<AppEntry>?> = combine(labeledApps, store.data) { apps, config ->
+        val hidden = config.hiddenApps.toSet()
+        apps?.filterNot { it.key in hidden }
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    val hiddenApps: StateFlow<List<AppEntry>> = combine(labeledApps, store.data) { apps, config ->
+        val hidden = config.hiddenApps.toSet()
+        apps.orEmpty().filter { it.key in hidden }
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    val tiles: StateFlow<List<Tile>> = combine(store.data, labeledApps) { config, apps ->
         val byKey = apps.orEmpty().associateBy { it.key }
         config.tiles.mapNotNull { t -> byKey[t.key]?.let { Tile(t, it) } }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
@@ -67,7 +86,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
                 }
             }
         }
-        viewModelScope.launch { applyDefaultTilesOnce() }
+        viewModelScope.launch { applySeedOnce() }
     }
 
     override fun onCleared() {
@@ -136,6 +155,22 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         else c.copy(tiles = c.tiles.toMutableList().apply { add(toIndex, removeAt(from)) })
     }
 
+    // --- Ukrywanie i nazwy ---
+
+    fun hide(key: AppKey) = update { c -> if (key in c.hiddenApps) c else c.copy(hiddenApps = c.hiddenApps + key) }
+
+    fun unhide(key: AppKey) = update { c -> c.copy(hiddenApps = c.hiddenApps - key) }
+
+    /** Pusta nazwa przywraca oryginalną. */
+    fun rename(app: AppEntry, label: String) = update { c ->
+        val others = c.aliases.filterNot { it.packageName == app.key.packageName && it.userSerial == app.key.userSerial }
+        val trimmed = label.trim()
+        c.copy(
+            aliases = if (trimmed.isEmpty() || trimmed == app.originalLabel) others
+            else others + AppAlias(app.key.packageName, app.key.userSerial, trimmed),
+        )
+    }
+
     // --- Ustawienia ---
 
     fun setAccent(id: String) = update { it.copy(accent = id) }
@@ -144,12 +179,40 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
 
     // --- Pierwsze uruchomienie ---
 
-    private suspend fun applyDefaultTilesOnce() {
-        if (store.data.first().defaultTilesApplied) return
+    /**
+     * Raz: kafelki, ukryte aplikacje i aliasy z [PersonalSeed]. Gdy żadnej aplikacji z kafelków
+     * nie ma (inny telefon), kafelki z domyślnych aplikacji systemu.
+     */
+    private suspend fun applySeedOnce() {
+        if (store.data.first().seedVersion >= PersonalSeed.VERSION) return
         val apps = repository.apps.filterNotNull().first()
-        val defaults = defaultTiles(apps)
+        val serials = HashMap<Int, Long?>()
+        fun serial(userId: Int) = serials.getOrPut(userId) { repository.serialForUserId(userId) }
+
+        fun resolve(app: PersonalSeed.App): AppEntry? {
+            val userSerial = serial(app.userId) ?: return null
+            val candidates = apps.filter { it.key.packageName == app.packageName && it.key.userSerial == userSerial }
+            // Nazwa aktywności mogła się zmienić po aktualizacji - wtedy pierwsza z pakietu.
+            return candidates.firstOrNull { it.key.className == app.className } ?: candidates.firstOrNull()
+        }
+
+        val seededTiles = PersonalSeed.tiles.mapNotNull { seed ->
+            resolve(seed.app)?.let { TileConfig(it.key.packageName, it.key.className, it.key.userSerial, seed.size) }
+        }.distinctBy { it.key }
+        val tiles = seededTiles.ifEmpty { defaultTiles(apps) }
+        val hidden = PersonalSeed.hidden.mapNotNull { h ->
+            resolve(h)?.key ?: serial(h.userId)?.let { AppKey(h.packageName, h.className ?: return@let null, it) }
+        }
+        val aliases = PersonalSeed.aliases.mapNotNull { a -> serial(a.userId)?.let { AppAlias(a.packageName, it, a.label) } }
+
         store.updateData { c ->
-            if (c.defaultTilesApplied) c else c.copy(tiles = c.tiles + defaults, defaultTilesApplied = true)
+            if (c.seedVersion >= PersonalSeed.VERSION) c
+            else c.copy(
+                tiles = tiles,
+                hiddenApps = (c.hiddenApps + hidden).distinct(),
+                aliases = c.aliases + aliases.filter { a -> c.aliasFor(a.packageName, a.userSerial) == null },
+                seedVersion = PersonalSeed.VERSION,
+            )
         }
     }
 
