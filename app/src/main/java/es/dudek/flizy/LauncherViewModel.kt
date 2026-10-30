@@ -190,21 +190,6 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         c.copy(tiles = c.tiles.map { if (it.key == key) it.copy(size = it.size.step(delta)) else it })
     }
 
-    /** Kolejny rozmiar w kółko - do stukania w etykietę rozmiaru na ekranie edycji. */
-    fun cycleTileSize(key: AppKey) = update { c ->
-        c.copy(tiles = c.tiles.map {
-            if (it.key == key) it.copy(size = TileSize.entries[(it.size.ordinal + 1) % TileSize.entries.size]) else it
-        })
-    }
-
-    /** Przesuwa kafelek o [delta] pozycji (ujemne = w górę). */
-    fun moveTile(key: AppKey, delta: Int) = update { c ->
-        val from = c.tiles.indexOfFirst { it.key == key }
-        val to = from + delta
-        if (from < 0 || to !in c.tiles.indices) c
-        else c.copy(tiles = c.tiles.toMutableList().apply { add(to, removeAt(from)) })
-    }
-
     /** Przeniesienie na konkretną pozycję (przeciąganie na liście edycji). */
     fun moveTileTo(key: AppKey, toIndex: Int) = update { c ->
         val from = c.tiles.indexOfFirst { it.key == key }

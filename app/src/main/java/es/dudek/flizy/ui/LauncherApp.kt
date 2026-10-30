@@ -286,9 +286,8 @@ fun LauncherApp(
                     Screen.EditTiles -> EditTilesScreen(
                         tiles = tiles,
                         icons = vm.icons,
-                        onMove = vm::moveTile,
                         onMoveTo = vm::moveTileTo,
-                        onToggleSize = vm::cycleTileSize,
+                        onSetSize = vm::setTileSize,
                         onUnpin = vm::unpin,
                         onAdd = { push(Screen.AddTile) },
                     )

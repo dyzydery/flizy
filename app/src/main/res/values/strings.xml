@@ -38,16 +38,14 @@
 
     <!-- Edycja kafelków -->
     <string name="edit_title">kafelki</string>
-    <string name="edit_hint">Przeciągnij za uchwyt ≡ albo użyj strzałek, aby zmienić kolejność. Stuknij szerokość, aby ją zmienić.</string>
+    <string name="edit_hint">Przeciągnij za uchwyt ≡, aby zmienić kolejność. Pod nazwą wybierz szerokość kafelka.</string>
     <string name="edit_add">dodaj aplikację</string>
     <string name="edit_empty">Nic nie jest przypięte.</string>
-    <string name="edit_size_quarter">szerokość 1/4</string>
-    <string name="edit_size_third">szerokość 1/3</string>
-    <string name="edit_size_half">szerokość 1/2</string>
-    <string name="edit_size_two_thirds">szerokość 2/3</string>
-    <string name="edit_size_full">cały rząd</string>
-    <string name="edit_move_up">Przesuń w górę</string>
-    <string name="edit_move_down">Przesuń w dół</string>
+    <string name="edit_size_quarter">1/4</string>
+    <string name="edit_size_third">1/3</string>
+    <string name="edit_size_half">1/2</string>
+    <string name="edit_size_two_thirds">2/3</string>
+    <string name="edit_size_full">cały</string>
     <string name="edit_unpin">Odepnij</string>
     <string name="picker_title">dodaj</string>
     <string name="picker_gesture_title">gest</string>

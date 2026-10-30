@@ -2,7 +2,9 @@ package es.dudek.flizy.ui.edit
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -26,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -58,9 +61,8 @@ private val RowHeight = 72.dp
 fun EditTilesScreen(
     tiles: List<Tile>,
     icons: IconLoader,
-    onMove: (AppKey, delta: Int) -> Unit,
     onMoveTo: (AppKey, index: Int) -> Unit,
-    onToggleSize: (AppKey) -> Unit,
+    onSetSize: (AppKey, TileSize) -> Unit,
     onUnpin: (AppKey) -> Unit,
     onAdd: () -> Unit,
 ) {
@@ -110,10 +112,7 @@ fun EditTilesScreen(
                     tile = tile,
                     index = tiles.indexOfFirst { it.app.key == key }.coerceAtLeast(0),
                     icons = icons,
-                    canMoveUp = order.firstOrNull() != tile,
-                    canMoveDown = order.lastOrNull() != tile,
-                    onMove = { onMove(key, it) },
-                    onToggleSize = { onToggleSize(key) },
+                    onSetSize = { onSetSize(key, it) },
                     onUnpin = { onUnpin(key) },
                     handleModifier = Modifier.pointerInput(key, tiles) {
                         detectDragGestures(
@@ -146,10 +145,7 @@ private fun EditRow(
     tile: Tile,
     index: Int,
     icons: IconLoader,
-    canMoveUp: Boolean,
-    canMoveDown: Boolean,
-    onMove: (Int) -> Unit,
-    onToggleSize: () -> Unit,
+    onSetSize: (TileSize) -> Unit,
     onUnpin: () -> Unit,
     modifier: Modifier = Modifier,
     handleModifier: Modifier = Modifier,
@@ -171,23 +167,45 @@ private fun EditRow(
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             BasicText(tile.app.label, style = MetroText.Body, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            BasicText(
-                stringResource(
-                    when (tile.config.size) {
-                        TileSize.QUARTER -> R.string.edit_size_quarter
-                        TileSize.THIRD -> R.string.edit_size_third
-                        TileSize.HALF -> R.string.edit_size_half
-                        TileSize.TWO_THIRDS -> R.string.edit_size_two_thirds
-                        TileSize.FULL -> R.string.edit_size_full
-                    },
-                ),
-                style = MetroText.Subtle.copy(color = accent),
-                modifier = Modifier.plainClickable(onClick = onToggleSize).padding(vertical = 4.dp, horizontal = 0.dp),
-            )
+            Spacer(Modifier.height(4.dp))
+            SizePicker(tile.config.size, accent, onSetSize)
         }
-        IconText("↑", stringResource(R.string.edit_move_up), enabled = canMoveUp) { onMove(-1) }
-        IconText("↓", stringResource(R.string.edit_move_down), enabled = canMoveDown) { onMove(1) }
         IconText("✕", stringResource(R.string.edit_unpin), enabled = true, onClick = onUnpin)
+    }
+}
+
+/** Rząd przycisków szerokości kafelka; wybrana podświetlona akcentem. */
+@Composable
+private fun SizePicker(selected: TileSize, accent: Color, onSelect: (TileSize) -> Unit) {
+    Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+        TileSize.entries.forEach { size ->
+            val isSelected = size == selected
+            val label = stringResource(
+                when (size) {
+                    TileSize.QUARTER -> R.string.edit_size_quarter
+                    TileSize.THIRD -> R.string.edit_size_third
+                    TileSize.HALF -> R.string.edit_size_half
+                    TileSize.TWO_THIRDS -> R.string.edit_size_two_thirds
+                    TileSize.FULL -> R.string.edit_size_full
+                },
+            )
+            Box(
+                Modifier
+                    .size(width = 38.dp, height = 26.dp)
+                    .background(if (isSelected) accent else Color.Transparent)
+                    .border(1.dp, if (isSelected) accent else Metro.Subtle)
+                    .plainClickable { onSelect(size) },
+                contentAlignment = Alignment.Center,
+            ) {
+                BasicText(
+                    label,
+                    style = MetroText.Subtle.copy(
+                        fontSize = 13.sp,
+                        color = if (isSelected) LocalColors.current.inkOn(accent) else Metro.Foreground,
+                    ),
+                )
+            }
+        }
     }
 }
 
