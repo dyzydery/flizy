@@ -8,7 +8,7 @@ package es.dudek.flizy.data
  * zamieniany w czasie działania na numer seryjny profilu.
  */
 object PersonalSeed {
-    const val VERSION = 3
+    const val VERSION = 5
 
     /** [className] null = pierwsza aktywność launchera z pakietu. */
     data class App(val packageName: String, val className: String?, val userId: Int)
@@ -24,18 +24,37 @@ object PersonalSeed {
     /** MIUI "Podwójne aplikacje" (XSpace) - profil klonów. */
     private const val CLONE = 999
 
+    /**
+     * Układ Startu: 5 pełnych rzędów (każdy = 12 kolumn), które razem z zegarem wypełniają ekran.
+     * Kolejność = kolejność wypełniania rzędów.
+     */
     val tiles = listOf(
-        SeedTile(App("com.google.android.calendar", "com.android.calendar.AllInOneActivity", WORK), TileSize.TWO_THIRDS),
-        SeedTile(App("com.duolingo", "com.duolingo.app.LoginActivity", MAIN), TileSize.THIRD),
+        // praca
+        SeedTile(App("com.google.android.calendar", "com.android.calendar.AllInOneActivity", WORK), TileSize.HALF),
+        SeedTile(App("com.google.android.gm", "com.google.android.gm.ConversationListActivityGmail", WORK), TileSize.QUARTER),
+        SeedTile(App("com.anthropic.claude", "com.anthropic.claude.mainactivity.MainActivity", WORK), TileSize.QUARTER, since = 4),
+        // rozmowy
+        SeedTile(App("com.whatsapp", "com.whatsapp.Main", MAIN), TileSize.QUARTER),
+        SeedTile(App("com.whatsapp", "com.whatsapp.Main", CLONE), TileSize.QUARTER, since = 2),
+        SeedTile(App("org.fossify.messages", "org.fossify.messages.activities.SplashActivity.Green", MAIN), TileSize.QUARTER, since = 4),
+        SeedTile(App("com.google.android.gm", "com.google.android.gm.ConversationListActivityGmail", MAIN), TileSize.QUARTER),
+        // w drodze
+        SeedTile(App("org.mozilla.firefox", "org.mozilla.firefox.App", MAIN), TileSize.THIRD, since = 4),
+        SeedTile(App("com.google.android.apps.maps", "com.google.android.maps.MapsActivity", MAIN), TileSize.THIRD),
         SeedTile(App("com.spotify.music", "com.spotify.music.MainActivity", MAIN), TileSize.THIRD),
-        SeedTile(App("com.darkempire78.opencalculator", "com.darkempire78.opencalculator.activities.MainActivity", MAIN), TileSize.THIRD),
-        SeedTile(App("com.google.android.gm", "com.google.android.gm.ConversationListActivityGmail", MAIN), TileSize.THIRD),
-        SeedTile(App("com.whatsapp", "com.whatsapp.Main", MAIN), TileSize.THIRD),
-        SeedTile(App("com.whatsapp", "com.whatsapp.Main", CLONE), TileSize.THIRD, since = 2),
-        SeedTile(App("com.google.android.gm", "com.google.android.gm.ConversationListActivityGmail", WORK), TileSize.THIRD),
-        SeedTile(App("com.google.android.apps.maps", "com.google.android.maps.MapsActivity", MAIN), TileSize.TWO_THIRDS),
+        // nauka i wiadomości
+        SeedTile(App("com.duolingo", "com.duolingo.app.LoginActivity", MAIN), TileSize.THIRD),
+        SeedTile(App("io.github.dyzydery.bahasakotak", "io.github.dyzydery.bahasakotak.MainActivity", MAIN), TileSize.THIRD, since = 4),
         SeedTile(App("pl.inko.infopigulaOne", "pl.inko.infopigulaOne.MainActivity", MAIN), TileSize.THIRD),
+        // narzędzia
+        SeedTile(App("com.android.camera", "com.android.camera.Camera", MAIN), TileSize.QUARTER, since = 4),
+        SeedTile(App("org.fossify.gallery", "org.fossify.gallery.activities.SplashActivity.Green", MAIN), TileSize.QUARTER, since = 4),
+        SeedTile(App("com.darkempire78.opencalculator", "com.darkempire78.opencalculator.activities.MainActivity", MAIN), TileSize.QUARTER),
+        SeedTile(App("com.superproductivity.superproductivity", "com.superproductivity.superproductivity.FullscreenActivity", MAIN), TileSize.QUARTER, since = 4),
     )
+
+    /** Od tej wersji układ kafelków jest ustawiany w całości (kolejność i rozmiary), a nie tylko uzupełniany. */
+    const val LAYOUT_SINCE = 5
 
     /** Gest na ekranie Start (jak "swipe left" w Multilauncherze). */
     val swipeRightApp = App("org.mozilla.firefox", "org.mozilla.firefox.App", MAIN)

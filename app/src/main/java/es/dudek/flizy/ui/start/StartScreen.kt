@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
@@ -29,6 +30,7 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -40,6 +42,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -115,7 +119,14 @@ fun StartScreen(
         // dzięki czemu kafelki w różnych rzędach wyrównują się co do piksela.
         val column: Dp = (maxWidth - SidePadding * 2 - TileGap * (GRID_COLUMNS - 1)) / GRID_COLUMNS
         fun widthOf(columns: Int): Dp = column * columns + TileGap * (columns - 1)
-        val rowHeight = widthOf(TileSize.THIRD.columns)
+        // Rzędy rozciągają się, żeby razem z zegarem wypełnić ekran do paska nawigacji
+        // (najwyżej 1,5× normalnej wysokości); gdy się nie mieszczą - zwykłe przewijanie.
+        val density = LocalDensity.current
+        var headerHeight by remember { mutableStateOf(0.dp) }
+        val navBar = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+        val baseRow = widthOf(TileSize.THIRD.columns)
+        val fill = if (rows.isEmpty()) baseRow else (maxHeight - headerHeight - navBar - TileGap * (rows.size + 1)) / rows.size
+        val rowHeight = fill.coerceIn(baseRow, baseRow * 1.5f)
         LazyColumn(
             state = listState,
             modifier = Modifier
@@ -125,7 +136,13 @@ fun StartScreen(
             contentPadding = PaddingValues(horizontal = SidePadding),
             verticalArrangement = Arrangement.spacedBy(TileGap),
         ) {
-            item { ClockHeader(onClockClick, onDateClick) }
+            item {
+                ClockHeader(
+                    onClockClick,
+                    onDateClick,
+                    Modifier.onSizeChanged { headerHeight = with(density) { it.height.toDp() } },
+                )
+            }
 
             if (tiles.isEmpty()) {
                 item {
@@ -175,7 +192,7 @@ private fun rememberNow(): Long {
 
 /** Duży zegar (stuknięcie: alarmy) i data (stuknięcie: kalendarz). */
 @Composable
-private fun ClockHeader(onClockClick: () -> Unit, onDateClick: () -> Unit) {
+private fun ClockHeader(onClockClick: () -> Unit, onDateClick: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val now = rememberNow()
     val locale = Locale.forLanguageTag("pl")
@@ -186,7 +203,7 @@ private fun ClockHeader(onClockClick: () -> Unit, onDateClick: () -> Unit) {
     val date = remember(now) { SimpleDateFormat("EEEE, d MMMM", locale).format(Date(now)) }
 
     Column(
-        Modifier.fillMaxWidth().statusBarsPadding().padding(top = 16.dp, bottom = 16.dp),
+        modifier.fillMaxWidth().statusBarsPadding().padding(top = 16.dp, bottom = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         BasicText(

@@ -67,7 +67,7 @@
     <string name="settings_gesture_none">nic nie robi</string>
     <string name="settings_gesture_pick">Wybierz aplikację</string>
     <string name="settings_gesture_clear">Wyłącz</string>
-    <string name="settings_gesture_down">Przeciągnięcie w dół (kafelki na samej górze) otwiera wyszukiwarkę aplikacji. Przeciągnięcie w lewo ← otwiera listę aplikacji.</string>
+    <string name="settings_gesture_down">Przeciągnięcie w lewo ← otwiera listę aplikacji.</string>
     <string name="settings_search">Wyszukiwanie</string>
     <string name="settings_auto_launch">Uruchamiaj od razu przy jednym dopasowaniu</string>
     <string name="settings_auto_launch_desc">Gdy w wyszukiwarce zostanie dokładnie jedna aplikacja, otwórz ją bez stukania.</string>

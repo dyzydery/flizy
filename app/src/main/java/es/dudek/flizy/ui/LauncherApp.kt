@@ -169,13 +169,12 @@ fun LauncherApp(
         }
     }
 
-    // Gesty na ekranie Start, rozpoznawane z przewijania, którego nikt nie zużył:
-    // w prawo (pager jest na pierwszej stronie) i w dół (kafelki są na samej górze).
+    // Gest na ekranie Start, rozpoznawany z przewijania, którego nikt nie zużył:
+    // w prawo, gdy pager jest już na pierwszej stronie.
     val gestureThreshold = with(LocalDensity.current) { 96.dp.toPx() }
     val gestures = remember(gestureThreshold) {
         object : NestedScrollConnection {
             var dx = 0f
-            var dy = 0f
             var fired = false
 
             override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
@@ -183,23 +182,15 @@ fun LauncherApp(
                     return Offset.Zero
                 }
                 if (available.x > 0f) dx += available.x
-                if (available.y > 0f) dy += available.y
-                when {
-                    dx > gestureThreshold -> {
-                        fired = true
-                        swipeRightApp?.let { vm.launch(it) }
-                    }
-                    dy > gestureThreshold -> {
-                        fired = true
-                        scope.launch { pager.animateScrollToPage(PAGE_APPS) }
-                    }
+                if (dx > gestureThreshold) {
+                    fired = true
+                    swipeRightApp?.let { vm.launch(it) }
                 }
                 return Offset.Zero
             }
 
             override suspend fun onPreFling(available: Velocity): Velocity {
                 dx = 0f
-                dy = 0f
                 fired = false
                 return Velocity.Zero
             }

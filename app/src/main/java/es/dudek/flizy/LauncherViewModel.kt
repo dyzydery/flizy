@@ -256,7 +256,8 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         val fresh = applied == 0
         fun <T> newer(items: List<T>, since: (T) -> Int) = if (fresh) items else items.filter { since(it) > applied }
 
-        val seededTiles = newer(PersonalSeed.tiles) { it.since }.mapNotNull { seed ->
+        val tileSeeds = if (applied < PersonalSeed.LAYOUT_SINCE) PersonalSeed.tiles else newer(PersonalSeed.tiles) { it.since }
+        val seededTiles = tileSeeds.mapNotNull { seed ->
             resolve(seed.app)?.let { seed to TileConfig(it.key.packageName, it.key.className, it.key.userSerial, seed.size) }
         }
         val hidden = newer(PersonalSeed.hidden) { 1 }.mapNotNull { h ->
@@ -270,6 +271,10 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
             if (c.seedVersion >= PersonalSeed.VERSION) return@updateData c
             val tiles = if (fresh) {
                 seededTiles.map { it.second }.distinctBy { it.key }.ifEmpty { defaultTiles(apps) }
+            } else if (applied < PersonalSeed.LAYOUT_SINCE) {
+                // Nowy układ w całości; kafelki dodane ręcznie, których w nim nie ma, idą na koniec.
+                val layout = seededTiles.map { it.second }.distinctBy { it.key }
+                layout + c.tiles.filter { t -> layout.none { it.key == t.key } }
             } else {
                 // Nowy kafelek ląduje za kafelkiem tej samej aplikacji, jeśli taki jest.
                 seededTiles.fold(c.tiles) { acc, (_, tile) ->
