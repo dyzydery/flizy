@@ -1,11 +1,13 @@
 package es.dudek.flizy.ui.start
 
+import android.text.format.DateFormat
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -30,6 +32,7 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -37,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -44,6 +48,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import es.dudek.flizy.R
 import es.dudek.flizy.Tile
 import es.dudek.flizy.data.IconLoader
@@ -54,6 +61,10 @@ import es.dudek.flizy.ui.components.rememberMonoIcon
 import es.dudek.flizy.ui.theme.LocalAccent
 import es.dudek.flizy.ui.theme.Metro
 import es.dudek.flizy.ui.theme.MetroText
+import kotlinx.coroutines.delay
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 private val TileGap = 4.dp
 private val SidePadding = 8.dp
@@ -98,6 +109,8 @@ fun StartScreen(
     onAllApps: () -> Unit,
     modifier: Modifier = Modifier,
     moreTiles: Boolean = true,
+    onClockClick: () -> Unit = {},
+    onDateClick: () -> Unit = {},
 ) {
     val slotsPerRow = if (moreTiles) 3 else 2
     val rows = remember(tiles, slotsPerRow) { packTiles(tiles, slotsPerRow) }
@@ -112,7 +125,7 @@ fun StartScreen(
             contentPadding = PaddingValues(horizontal = SidePadding),
             verticalArrangement = Arrangement.spacedBy(TileGap),
         ) {
-            item { Spacer(Modifier.statusBarsPadding().height(28.dp)) }
+            item { ClockHeader(onClockClick, onDateClick) }
 
             if (tiles.isEmpty()) {
                 item {
@@ -136,6 +149,48 @@ fun StartScreen(
             item { StartFooter(onEditTiles, onSettings, onAllApps) }
             item { Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars)) }
         }
+    }
+}
+
+/** Aktualny czas, odświeżany na początku każdej minuty. */
+@Composable
+private fun rememberNow(): Long {
+    // delay() nie liczy czasu uśpienia telefonu, więc po każdym powrocie na ekran liczymy od nowa.
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val now by produceState(System.currentTimeMillis(), lifecycle) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            while (true) {
+                value = System.currentTimeMillis()
+                delay(60_000 - value % 60_000)
+            }
+        }
+    }
+    return now
+}
+
+/** Duży zegar (stuknięcie: alarmy) i data (stuknięcie: kalendarz). */
+@Composable
+private fun ClockHeader(onClockClick: () -> Unit, onDateClick: () -> Unit) {
+    val context = LocalContext.current
+    val now = rememberNow()
+    val locale = Locale.forLanguageTag("pl")
+    val time = remember(now) {
+        val pattern = if (DateFormat.is24HourFormat(context)) "H:mm" else "h:mm"
+        SimpleDateFormat(pattern, locale).format(Date(now))
+    }
+    val date = remember(now) { SimpleDateFormat("EEEE, d MMMM", locale).format(Date(now)) }
+
+    Column(Modifier.statusBarsPadding().padding(start = 4.dp, top = 16.dp, bottom = 16.dp)) {
+        BasicText(
+            time,
+            style = MetroText.Clock,
+            modifier = Modifier.plainClickable(onClick = onClockClick),
+        )
+        BasicText(
+            date,
+            style = MetroText.Date,
+            modifier = Modifier.plainClickable(onClick = onDateClick).padding(start = 4.dp, bottom = 4.dp),
+        )
     }
 }
 

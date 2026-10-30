@@ -169,6 +169,8 @@ fun LauncherApp(
                         onSettings = { push(Screen.Settings) },
                         onAllApps = { scope.launch { pager.animateScrollToPage(PAGE_APPS) } },
                         moreTiles = cfg.moreTiles,
+                        onClockClick = vm::openAlarms,
+                        onDateClick = vm::openPrivateCalendar,
                     )
                     PAGE_APPS -> AppListScreen(
                         apps = apps,

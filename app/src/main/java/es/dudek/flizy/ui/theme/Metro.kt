@@ -65,6 +65,8 @@ object MetroText {
     val Body = TextStyle(fontFamily = Selawik, fontWeight = FontWeight.Normal, fontSize = 17.sp, color = Metro.Foreground)
     val Subtle = TextStyle(fontFamily = Selawik, fontWeight = FontWeight.Normal, fontSize = 15.sp, color = Metro.Subtle)
     val Section = TextStyle(fontFamily = Selawik, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = Metro.Subtle)
+    val Clock = TextStyle(fontFamily = Selawik, fontWeight = FontWeight.Light, fontSize = 88.sp, lineHeight = 92.sp, color = Metro.Foreground)
+    val Date = TextStyle(fontFamily = Selawik, fontWeight = FontWeight.Normal, fontSize = 20.sp, color = Metro.Foreground)
     val TileLabel = TextStyle(fontFamily = Selawik, fontWeight = FontWeight.Normal, fontSize = 14.sp, color = Color.White)
     val Menu = TextStyle(fontFamily = Selawik, fontWeight = FontWeight.Normal, fontSize = 21.sp, color = Metro.Foreground)
 }

@@ -1,12 +1,16 @@
 package es.dudek.flizy
 
 import android.app.Application
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.LauncherApps
 import android.content.pm.PackageManager
 import android.graphics.Rect
 import android.net.Uri
 import android.os.Process
+import android.os.UserHandle
+import android.provider.AlarmClock
+import android.provider.CalendarContract
 import android.provider.MediaStore
 import android.provider.Settings
 import android.provider.Telephony
@@ -119,6 +123,33 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         runCatching { context.startActivity(intent) }
             .onFailure { Log.w(TAG, "Nie udało się odinstalować ${app.key.packageName}", it) }
+    }
+
+    /** Systemowy ekran alarmów; gdy zegar go nie obsługuje - sama aplikacja zegara. */
+    fun openAlarms() {
+        val intent = Intent(AlarmClock.ACTION_SHOW_ALARMS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        try {
+            context.startActivity(intent)
+        } catch (e: ActivityNotFoundException) {
+            Log.w(TAG, "Brak ekranu alarmów", e)
+            launchPackage("com.android.deskclock", Process.myUserHandle())
+        }
+    }
+
+    /** Prywatny Kalendarz Google (profil główny); gdy go nie ma - domyślny kalendarz systemu. */
+    fun openPrivateCalendar() {
+        if (launchPackage(GOOGLE_CALENDAR, Process.myUserHandle())) return
+        val intent = Intent(Intent.ACTION_VIEW, CalendarContract.CONTENT_URI.buildUpon().appendPath("time").build())
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        runCatching { context.startActivity(intent) }.onFailure { Log.w(TAG, "Brak kalendarza", it) }
+    }
+
+    private fun launchPackage(packageName: String, user: UserHandle): Boolean {
+        val serial = repository.userSerial(user)
+        val app = labeledApps.value?.firstOrNull { it.key.packageName == packageName && it.key.userSerial == serial }
+            ?: return false
+        launch(app)
+        return true
     }
 
     // --- Kafelki ---
@@ -242,5 +273,6 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
 
     private companion object {
         const val TAG = "Flizy"
+        const val GOOGLE_CALENDAR = "com.google.android.calendar"
     }
 }
