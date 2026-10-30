@@ -5,7 +5,9 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
+import es.dudek.flizy.data.TileStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -123,12 +125,16 @@ val Themes = listOf(
 fun themeById(id: String): FlizyTheme = Themes.firstOrNull { it.id == id } ?: Themes.first()
 
 /** Kolory w użyciu: motyw + wybrany akcent + przełączniki z ustawień. */
+/** Kolory jednego kafelka. */
+data class TileLook(val background: Color, val border: Color?, val icon: Color, val label: Color)
+
 @Immutable
 data class FlizyColors(
     val theme: FlizyTheme,
     val accent: Color,
     val rainbow: Boolean,
     val amoledBlack: Boolean,
+    val tileStyle: TileStyle = TileStyle.FILLED,
 ) {
     val background: Color get() = if (amoledBlack) Color.Black else theme.background
     val surface: Color get() = theme.surface
@@ -138,6 +144,12 @@ data class FlizyColors(
     /** Kolor kafelka na pozycji [index]: akcent albo kolejny kolor motywu w trybie tęczy. */
     fun tileColor(index: Int): Color =
         if (rainbow) theme.accents[index % theme.accents.size].color else accent
+
+    fun tileLook(color: Color): TileLook = when (tileStyle) {
+        TileStyle.FILLED -> inkOn(color).let { TileLook(color, null, it, it) }
+        TileStyle.OUTLINE -> TileLook(Color.Transparent, color, color, text)
+        TileStyle.TINTED -> TileLook(color.copy(alpha = 0.2f).compositeOver(background), null, color, text)
+    }
 
     /** Kolor ikony i napisu na tle [color]. */
     fun inkOn(color: Color): Color = when {

@@ -55,6 +55,7 @@ import es.dudek.flizy.data.TileSize
 import es.dudek.flizy.ui.components.metroPressable
 import es.dudek.flizy.ui.components.plainClickable
 import es.dudek.flizy.ui.components.rememberMonoIcon
+import es.dudek.flizy.ui.components.tileSurface
 import es.dudek.flizy.ui.theme.LocalColors
 import es.dudek.flizy.ui.theme.Metro
 import es.dudek.flizy.ui.theme.MetroText
@@ -217,20 +218,20 @@ private fun TileView(
         modifier
             .onGloballyPositioned { bottom = it.boundsInRoot().bottom }
             .metroPressable(onLongClick = { onLongPress(tile, bottom) }, onClick = { onLaunch(tile) })
-            .background(color),
+            .tileSurface(LocalColors.current.tileLook(color)),
     ) {
-        val ink = LocalColors.current.inkOn(color)
+        val look = LocalColors.current.tileLook(color)
         mono?.let {
             Image(
                 it,
                 contentDescription = null,
-                colorFilter = ColorFilter.tint(ink),
-                modifier = Modifier.align(Alignment.Center).fillMaxHeight(0.4f).aspectRatio(1f),
+                colorFilter = ColorFilter.tint(look.icon),
+                modifier = Modifier.align(Alignment.Center).fillMaxHeight(0.5f).aspectRatio(1f),
             )
         }
         BasicText(
             tile.app.label,
-            style = MetroText.TileLabel.copy(color = ink, fontSize = if (narrow) 11.sp else 12.sp),
+            style = MetroText.TileLabel.copy(color = look.label, fontSize = if (narrow) 11.sp else 12.sp),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.align(Alignment.BottomStart).padding(start = 6.dp, end = 6.dp, bottom = 4.dp),

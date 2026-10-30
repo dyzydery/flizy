@@ -27,6 +27,7 @@ import es.dudek.flizy.data.LauncherConfig
 import es.dudek.flizy.data.PersonalSeed
 import es.dudek.flizy.data.TileConfig
 import es.dudek.flizy.data.TileSize
+import es.dudek.flizy.data.TileStyle
 import es.dudek.flizy.data.launcherConfigStore
 import es.dudek.flizy.data.sortedByLabel
 import es.dudek.flizy.ui.theme.themeById
@@ -237,6 +238,8 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
     fun setRainbow(enabled: Boolean) = update { it.copy(rainbow = enabled) }
 
     fun setAmoledBlack(enabled: Boolean) = update { it.copy(amoledBlack = enabled) }
+
+    fun setTileStyle(style: TileStyle) = update { it.copy(tileStyle = style) }
 
     fun setSwipeRightApp(key: AppKey?) = update { it.copy(swipeRightApp = key) }
 

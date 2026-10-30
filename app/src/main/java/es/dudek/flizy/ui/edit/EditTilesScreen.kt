@@ -46,6 +46,7 @@ import es.dudek.flizy.ui.components.MetroButton
 import es.dudek.flizy.ui.components.PageHeader
 import es.dudek.flizy.ui.components.plainClickable
 import es.dudek.flizy.ui.components.rememberMonoIcon
+import es.dudek.flizy.ui.components.tileSurface
 import es.dudek.flizy.ui.theme.LocalAccent
 import es.dudek.flizy.ui.theme.LocalColors
 import es.dudek.flizy.ui.theme.Metro
@@ -161,9 +162,10 @@ private fun EditRow(
         Box(handleModifier.size(width = 36.dp, height = RowHeight), contentAlignment = Alignment.CenterStart) {
             BasicText("≡", style = MetroText.Item.copy(fontSize = 28.sp, color = Metro.Subtle))
         }
-        Box(Modifier.size(52.dp).background(tileColor), contentAlignment = Alignment.Center) {
+        val look = colors.tileLook(tileColor)
+        Box(Modifier.size(52.dp).tileSurface(look), contentAlignment = Alignment.Center) {
             mono?.let {
-                Image(it, contentDescription = null, colorFilter = ColorFilter.tint(colors.inkOn(tileColor)), modifier = Modifier.size(26.dp))
+                Image(it, contentDescription = null, colorFilter = ColorFilter.tint(look.icon), modifier = Modifier.size(26.dp))
             }
         }
         Spacer(Modifier.width(12.dp))

@@ -48,6 +48,7 @@ import es.dudek.flizy.R
 import es.dudek.flizy.data.AppEntry
 import es.dudek.flizy.data.IconLoader
 import es.dudek.flizy.ui.theme.LocalAccent
+import es.dudek.flizy.ui.theme.TileLook
 import es.dudek.flizy.ui.theme.Metro
 import es.dudek.flizy.ui.theme.MetroText
 
@@ -94,6 +95,10 @@ fun Modifier.metroPressable(
             )
         }
 }
+
+/** Tło i ewentualna obwódka kafelka wg stylu z ustawień. */
+fun Modifier.tileSurface(look: TileLook): Modifier =
+    background(look.background).then(if (look.border != null) Modifier.border(2.dp, look.border) else Modifier)
 
 /** Zwykłe kliknięcie bez efektu falowania Material. */
 fun Modifier.plainClickable(role: Role? = Role.Button, onClick: () -> Unit): Modifier = composed {

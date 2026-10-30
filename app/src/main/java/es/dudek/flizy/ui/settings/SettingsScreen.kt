@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import es.dudek.flizy.BuildConfig
 import es.dudek.flizy.R
 import es.dudek.flizy.data.LauncherConfig
+import es.dudek.flizy.data.TileStyle
+import androidx.compose.ui.graphics.Color
 import es.dudek.flizy.ui.components.MetroButton
 import es.dudek.flizy.ui.components.MetroToggle
 import es.dudek.flizy.ui.components.PageHeader
@@ -45,6 +47,7 @@ fun SettingsScreen(
     onTheme: (String) -> Unit,
     onRainbow: (Boolean) -> Unit,
     onAmoledBlack: (Boolean) -> Unit,
+    onTileStyle: (TileStyle) -> Unit,
     onAutoLaunch: (Boolean) -> Unit,
     onSetDefault: () -> Unit,
     onEditTiles: () -> Unit,
@@ -74,6 +77,26 @@ fun SettingsScreen(
                 description = stringResource(R.string.settings_amoled_desc),
             ) {
                 MetroToggle(config.amoledBlack, onCheckedChange = onAmoledBlack)
+            }
+
+            SectionTitle(stringResource(R.string.settings_tile_style))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf(
+                    TileStyle.FILLED to R.string.settings_tile_filled,
+                    TileStyle.OUTLINE to R.string.settings_tile_outline,
+                    TileStyle.TINTED to R.string.settings_tile_tinted,
+                ).forEach { (style, label) ->
+                    val selected = config.tileStyle == style
+                    BasicText(
+                        stringResource(label),
+                        style = MetroText.Body.copy(color = if (selected) Metro.Background else Metro.Foreground),
+                        modifier = Modifier
+                            .border(2.dp, Metro.Foreground)
+                            .background(if (selected) Metro.Foreground else Color.Transparent)
+                            .plainClickable { onTileStyle(style) }
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                    )
+                }
             }
 
             SectionTitle(stringResource(R.string.settings_accent))

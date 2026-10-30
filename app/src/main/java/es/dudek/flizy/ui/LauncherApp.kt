@@ -215,7 +215,7 @@ fun LauncherApp(
     }
 
     val theme = themeById(cfg.theme)
-    val colors = FlizyColors(theme, theme.accent(cfg.accent).color, cfg.rainbow, cfg.amoledBlack)
+    val colors = FlizyColors(theme, theme.accent(cfg.accent).color, cfg.rainbow, cfg.amoledBlack, cfg.tileStyle)
     CompositionLocalProvider(LocalColors provides colors, LocalAccent provides colors.accent) {
         Box(Modifier.fillMaxSize().background(Metro.Background).nestedScroll(gestures)) {
             HorizontalPager(state = pager, beyondViewportPageCount = 1, modifier = Modifier.fillMaxSize()) { page ->
@@ -261,6 +261,7 @@ fun LauncherApp(
                         onTheme = vm::setTheme,
                         onRainbow = vm::setRainbow,
                         onAmoledBlack = vm::setAmoledBlack,
+                        onTileStyle = vm::setTileStyle,
                         onAutoLaunch = vm::setAutoLaunch,
                         onSetDefault = onSetDefaultLauncher,
                         onEditTiles = { push(Screen.EditTiles) },

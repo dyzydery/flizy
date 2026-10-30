@@ -53,6 +53,10 @@ data class AppAlias(
     val label: String,
 )
 
+/** Wygląd kafelka: pełny kolor, sama obwódka albo przyciemnione tło. */
+@Serializable
+enum class TileStyle { FILLED, OUTLINE, TINTED }
+
 @Serializable
 data class LauncherConfig(
     val tiles: List<TileConfig> = emptyList(),
@@ -63,6 +67,7 @@ data class LauncherConfig(
     val rainbow: Boolean = false,
     /** Czarne tło zamiast tła motywu (AMOLED). */
     val amoledBlack: Boolean = false,
+    val tileStyle: TileStyle = TileStyle.FILLED,
     val autoLaunchSingleMatch: Boolean = true,
     val hiddenApps: List<AppKey> = emptyList(),
     val aliases: List<AppAlias> = emptyList(),
