@@ -53,6 +53,9 @@
     <!-- Ustawienia -->
     <string name="settings_title">ustawienia</string>
     <string name="settings_accent">Kolor akcentu</string>
+    <string name="settings_start">Start</string>
+    <string name="settings_more_tiles">Pokaż więcej kafelków</string>
+    <string name="settings_more_tiles_desc">Trzy średnie kafelki w rzędzie zamiast dwóch.</string>
     <string name="settings_search">Wyszukiwanie</string>
     <string name="settings_auto_launch">Uruchamiaj od razu przy jednym dopasowaniu</string>
     <string name="settings_auto_launch_desc">Gdy w wyszukiwarce zostanie dokładnie jedna aplikacja, otwórz ją bez stukania.</string>

@@ -58,40 +58,32 @@ import es.dudek.flizy.ui.theme.MetroText
 private val TileGap = 4.dp
 private val SidePadding = 8.dp
 
-/** Rząd siatki: jeden szeroki kafelek albo do dwóch średnich. */
-sealed interface TileRow {
-    val key: String
-
-    data class Wide(val tile: Tile) : TileRow {
-        override val key get() = "w:${tile.app.key}"
-    }
-
-    data class Pair(val left: Tile, val right: Tile?) : TileRow {
-        override val key get() = "p:${left.app.key}"
-    }
+/** Rząd siatki o wysokości średniego kafelka; średni zajmuje 1 miejsce, szeroki 2. */
+data class TileRow(val tiles: List<Tile>) {
+    val key: String get() = tiles.joinToString("|") { it.app.key.toString() }
 }
 
+private val Tile.slots: Int get() = if (config.size == TileSize.WIDE) 2 else 1
+
 /**
- * Gęste upakowanie jak w WP: samotny średni kafelek zostawia wolną połówkę rzędu,
- * którą zajmuje następny średni, nawet jeśli po drodze był szeroki.
+ * Gęste upakowanie jak w WP: kafelek trafia do pierwszego rzędu, w którym jest dla niego
+ * miejsce, więc luki po samotnych średnich kafelkach wypełniają kolejne.
+ * [slotsPerRow] = 2 (siatka 4 kolumn) albo 3 (6 kolumn, "więcej kafelków").
  */
-fun packTiles(tiles: List<Tile>): List<TileRow> {
-    val rows = mutableListOf<TileRow>()
-    var openRow = -1
+fun packTiles(tiles: List<Tile>, slotsPerRow: Int): List<TileRow> {
+    val rows = mutableListOf<MutableList<Tile>>()
+    val used = mutableListOf<Int>()
     for (tile in tiles) {
-        when {
-            tile.config.size == TileSize.WIDE -> rows += TileRow.Wide(tile)
-            openRow >= 0 -> {
-                rows[openRow] = (rows[openRow] as TileRow.Pair).copy(right = tile)
-                openRow = -1
-            }
-            else -> {
-                rows += TileRow.Pair(tile, null)
-                openRow = rows.lastIndex
-            }
+        val index = used.indexOfFirst { it + tile.slots <= slotsPerRow }
+        if (index >= 0) {
+            rows[index] += tile
+            used[index] += tile.slots
+        } else {
+            rows += mutableListOf(tile)
+            used += tile.slots
         }
     }
-    return rows
+    return rows.map { TileRow(it) }
 }
 
 @Composable
@@ -105,10 +97,12 @@ fun StartScreen(
     onSettings: () -> Unit,
     onAllApps: () -> Unit,
     modifier: Modifier = Modifier,
+    moreTiles: Boolean = true,
 ) {
-    val rows = remember(tiles) { packTiles(tiles) }
+    val slotsPerRow = if (moreTiles) 3 else 2
+    val rows = remember(tiles, slotsPerRow) { packTiles(tiles, slotsPerRow) }
     BoxWithConstraints(modifier.fillMaxSize().background(Metro.Background)) {
-        val medium: Dp = (maxWidth - SidePadding * 2 - TileGap) / 2
+        val medium: Dp = (maxWidth - SidePadding * 2 - TileGap * (slotsPerRow - 1)) / slotsPerRow
         LazyColumn(
             state = listState,
             modifier = Modifier
@@ -132,12 +126,9 @@ fun StartScreen(
 
             items(rows, key = { it.key }) { row ->
                 Row(Modifier.fillMaxWidth().height(medium), horizontalArrangement = Arrangement.spacedBy(TileGap)) {
-                    when (row) {
-                        is TileRow.Wide -> TileView(row.tile, icons, Modifier.fillMaxSize(), onLaunch, onTileLongPress)
-                        is TileRow.Pair -> {
-                            TileView(row.left, icons, Modifier.width(medium).fillMaxHeight(), onLaunch, onTileLongPress)
-                            row.right?.let { TileView(it, icons, Modifier.width(medium).fillMaxHeight(), onLaunch, onTileLongPress) }
-                        }
+                    row.tiles.forEach { tile ->
+                        val width = medium * tile.slots + TileGap * (tile.slots - 1)
+                        TileView(tile, icons, Modifier.width(width).fillMaxHeight(), onLaunch, onTileLongPress, compact = moreTiles)
                     }
                 }
             }
@@ -155,6 +146,7 @@ private fun TileView(
     modifier: Modifier,
     onLaunch: (Tile) -> Unit,
     onLongPress: (Tile, Float) -> Unit,
+    compact: Boolean,
 ) {
     val mono = rememberMonoIcon(tile.app, icons)
     var bottom by remember { mutableFloatStateOf(0f) }
@@ -173,10 +165,10 @@ private fun TileView(
         }
         BasicText(
             tile.app.label,
-            style = MetroText.TileLabel,
+            style = if (compact) MetroText.TileLabel.copy(fontSize = 12.sp) else MetroText.TileLabel,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.align(Alignment.BottomStart).padding(start = 8.dp, end = 8.dp, bottom = 6.dp),
+            modifier = Modifier.align(Alignment.BottomStart).padding(start = 6.dp, end = 6.dp, bottom = if (compact) 4.dp else 6.dp),
         )
     }
 }

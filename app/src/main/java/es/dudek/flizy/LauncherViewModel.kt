@@ -177,6 +177,8 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
 
     fun setAutoLaunch(enabled: Boolean) = update { it.copy(autoLaunchSingleMatch = enabled) }
 
+    fun setMoreTiles(enabled: Boolean) = update { it.copy(moreTiles = enabled) }
+
     // --- Pierwsze uruchomienie ---
 
     /**

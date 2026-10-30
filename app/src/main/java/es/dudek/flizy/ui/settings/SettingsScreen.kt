@@ -41,6 +41,7 @@ fun SettingsScreen(
     isDefaultLauncher: Boolean,
     onAccent: (String) -> Unit,
     onAutoLaunch: (Boolean) -> Unit,
+    onMoreTiles: (Boolean) -> Unit,
     onSetDefault: () -> Unit,
     onEditTiles: () -> Unit,
     hiddenCount: Int,
@@ -57,6 +58,14 @@ fun SettingsScreen(
             SectionTitle(stringResource(R.string.settings_accent))
             BasicText(accentById(config.accent).name, style = MetroText.Body, modifier = Modifier.padding(bottom = 10.dp))
             AccentGrid(selected = config.accent, onSelect = onAccent)
+
+            SectionTitle(stringResource(R.string.settings_start))
+            SettingRow(
+                title = stringResource(R.string.settings_more_tiles),
+                description = stringResource(R.string.settings_more_tiles_desc),
+            ) {
+                MetroToggle(config.moreTiles, onCheckedChange = onMoreTiles)
+            }
 
             SectionTitle(stringResource(R.string.settings_search))
             SettingRow(

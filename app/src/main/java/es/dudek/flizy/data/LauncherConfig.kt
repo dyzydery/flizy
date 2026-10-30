@@ -40,6 +40,8 @@ data class LauncherConfig(
     val tiles: List<TileConfig> = emptyList(),
     val accent: String = DEFAULT_ACCENT,
     val autoLaunchSingleMatch: Boolean = true,
+    /** Siatka 6 kolumn (3 średnie kafelki w rzędzie) zamiast 4, jak "więcej kafelków" w WP 8.1. */
+    val moreTiles: Boolean = true,
     val hiddenApps: List<AppKey> = emptyList(),
     val aliases: List<AppAlias> = emptyList(),
     /** Wersja zastosowanej konfiguracji startowej ([PersonalSeed]); 0 = jeszcze nie zastosowana. */

@@ -168,6 +168,7 @@ fun LauncherApp(
                         onEditTiles = { push(Screen.EditTiles) },
                         onSettings = { push(Screen.Settings) },
                         onAllApps = { scope.launch { pager.animateScrollToPage(PAGE_APPS) } },
+                        moreTiles = cfg.moreTiles,
                     )
                     PAGE_APPS -> AppListScreen(
                         apps = apps,
@@ -198,6 +199,7 @@ fun LauncherApp(
                         isDefaultLauncher = isDefaultLauncher,
                         onAccent = vm::setAccent,
                         onAutoLaunch = vm::setAutoLaunch,
+                        onMoreTiles = vm::setMoreTiles,
                         onSetDefault = onSetDefaultLauncher,
                         onEditTiles = { push(Screen.EditTiles) },
                         hiddenCount = hiddenApps.size,
