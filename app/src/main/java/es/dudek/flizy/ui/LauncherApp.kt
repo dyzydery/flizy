@@ -178,7 +178,6 @@ fun LauncherApp(
                         onLaunch = { vm.launch(it.app) },
                         onTileLongPress = ::showTileMenu,
                         onEmptyLongPress = ::showStartMenu,
-                        onAllApps = { scope.launch { pager.animateScrollToPage(PAGE_APPS) } },
                         onClockClick = vm::openAlarms,
                         onDateClick = vm::openPrivateCalendar,
                     )

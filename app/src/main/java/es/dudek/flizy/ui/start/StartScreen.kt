@@ -3,7 +3,6 @@ package es.dudek.flizy.ui.start
 import android.text.format.DateFormat
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,14 +19,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -42,8 +39,6 @@ import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -105,7 +100,6 @@ fun StartScreen(
     onLaunch: (Tile) -> Unit,
     onTileLongPress: (Tile, anchorBottomPx: Float) -> Unit,
     onEmptyLongPress: (anchorPx: Float) -> Unit,
-    onAllApps: () -> Unit,
     onClockClick: () -> Unit,
     onDateClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -146,7 +140,6 @@ fun StartScreen(
                 }
             }
 
-            item { StartFooter(onAllApps) }
             item { Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars)) }
         }
     }
@@ -228,23 +221,5 @@ private fun TileView(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.align(Alignment.BottomStart).padding(start = 6.dp, end = 6.dp, bottom = 4.dp),
         )
-    }
-}
-
-/** Okrągły przycisk ze strzałką do listy aplikacji, jak w WP 8. */
-@Composable
-private fun StartFooter(onAllApps: () -> Unit) {
-    val allApps = stringResource(R.string.start_all_apps)
-    Box(Modifier.fillMaxWidth().padding(top = 20.dp, bottom = 16.dp, end = 4.dp), contentAlignment = Alignment.CenterEnd) {
-        Box(
-            Modifier
-                .size(44.dp)
-                .semantics { contentDescription = allApps }
-                .border(2.dp, Metro.Foreground, CircleShape)
-                .plainClickable(onClick = onAllApps),
-            contentAlignment = Alignment.Center,
-        ) {
-            BasicText("→", style = MetroText.Body.copy(fontSize = 22.sp))
-        }
     }
 }

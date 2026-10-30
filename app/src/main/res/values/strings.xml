@@ -31,7 +31,6 @@
 
     <!-- Start -->
     <string name="start_empty">Brak kafelków. Przytrzymaj puste miejsce albo przesuń w lewo, aby przypiąć aplikacje.</string>
-    <string name="start_all_apps">wszystkie aplikacje</string>
     <string name="menu_resize_grow">powiększ</string>
     <string name="menu_resize_shrink">zmniejsz</string>
     <string name="menu_edit_tiles">edytuj kafelki</string>

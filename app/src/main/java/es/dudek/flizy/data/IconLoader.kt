@@ -6,9 +6,11 @@ import android.graphics.Canvas
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
 import android.os.Build
+import android.util.Log
 import android.util.LruCache
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.math.sqrt
@@ -36,7 +38,16 @@ class IconLoader(context: Context) {
     suspend fun monoIcon(app: AppEntry): ImageBitmap? {
         monoCache.get(app.key)?.let { return it.bitmap }
         return withContext(Dispatchers.Default) {
-            val bitmap = runCatching { MonoIcons.create(app.info.getIcon(densityDpi), MONO_SIZE) }.getOrNull()
+            // Bez runCatching: połknąłby anulowanie korutyny (np. przebudowa kafelka)
+            // i "nieczytelna ikona" zostałaby zapamiętana na stałe.
+            val bitmap = try {
+                MonoIcons.create(app.info.getIcon(densityDpi), MONO_SIZE)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w("Flizy", "Nie udało się utworzyć ikony ${app.key}", e)
+                return@withContext null // nie zapamiętujemy - następnym razem spróbuje ponownie
+            }
             bitmap?.asImageBitmap().also { monoCache.put(app.key, Mono(it)) }
         }
     }
