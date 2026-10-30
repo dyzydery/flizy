@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Flizy</string>
+    <string name="app_title_caps">FLIZY</string>
+
+    <string name="launch_failed">Nie można uruchomić: %1$s</string>
+
+    <!-- Lista aplikacji -->
+    <string name="apps_title">aplikacje</string>
+    <string name="search_hint">szukaj</string>
+    <string name="search_no_results">Brak aplikacji pasujących do „%1$s”.</string>
+    <string name="apps_loading">wczytywanie…</string>
+    <string name="menu_pin">przypnij do startu</string>
+    <string name="menu_unpin">odepnij od startu</string>
+    <string name="menu_app_info">informacje o aplikacji</string>
+    <string name="menu_uninstall">odinstaluj</string>
+
+    <!-- Start -->
+    <string name="start_empty">Brak kafelków. Przytrzymaj puste miejsce albo przesuń w lewo, aby przypiąć aplikacje.</string>
+    <string name="start_edit">edytuj kafelki</string>
+    <string name="start_settings">ustawienia</string>
+    <string name="start_all_apps">wszystkie aplikacje</string>
+    <string name="menu_resize_wide">zmień na szeroki</string>
+    <string name="menu_resize_medium">zmień na średni</string>
+    <string name="menu_edit_tiles">edytuj kafelki</string>
+
+    <!-- Edycja kafelków -->
+    <string name="edit_title">kafelki</string>
+    <string name="edit_hint">Przeciągnij za uchwyt ≡ albo użyj strzałek, aby zmienić kolejność.</string>
+    <string name="edit_add">dodaj aplikację</string>
+    <string name="edit_empty">Nic nie jest przypięte.</string>
+    <string name="edit_size_medium">średni</string>
+    <string name="edit_size_wide">szeroki</string>
+    <string name="edit_move_up">Przesuń w górę</string>
+    <string name="edit_move_down">Przesuń w dół</string>
+    <string name="edit_unpin">Odepnij</string>
+    <string name="picker_title">dodaj</string>
+
+    <!-- Ustawienia -->
+    <string name="settings_title">ustawienia</string>
+    <string name="settings_accent">Kolor akcentu</string>
+    <string name="settings_search">Wyszukiwanie</string>
+    <string name="settings_auto_launch">Uruchamiaj od razu przy jednym dopasowaniu</string>
+    <string name="settings_auto_launch_desc">Gdy w wyszukiwarce zostanie dokładnie jedna aplikacja, otwórz ją bez stukania.</string>
+    <string name="settings_launcher">Domyślny launcher</string>
+    <string name="settings_set_default">Ustaw jako domyślny launcher</string>
+    <string name="settings_is_default">Flizy jest domyślnym launcherem.</string>
+    <string name="settings_not_default">Flizy nie jest domyślnym launcherem.</string>
+    <string name="settings_tiles">Kafelki</string>
+    <string name="settings_edit_tiles">Edytuj kafelki</string>
+    <string name="settings_about">Flizy %1$s · font Selawik (SIL OFL 1.1)</string>
+</resources>

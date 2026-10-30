@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Układ kafelków WP: dwa średnie u góry, szeroki na dole. Obszar 108dp, bezpieczna strefa 66dp. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:fillColor="#FFFFFFFF" android:pathData="M33,33h20v20h-20z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M55,33h20v20h-20z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M33,55h42v20h-42z" />
+</vector>
