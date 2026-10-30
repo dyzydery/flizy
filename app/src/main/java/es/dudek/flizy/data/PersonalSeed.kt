@@ -8,7 +8,7 @@ package es.dudek.flizy.data
  * zamieniany w czasie działania na numer seryjny profilu.
  */
 object PersonalSeed {
-    const val VERSION = 2
+    const val VERSION = 3
 
     /** [className] null = pierwsza aktywność launchera z pakietu. */
     data class App(val packageName: String, val className: String?, val userId: Int)
@@ -36,6 +36,10 @@ object PersonalSeed {
         SeedTile(App("com.google.android.apps.maps", "com.google.android.maps.MapsActivity", MAIN), TileSize.TWO_THIRDS),
         SeedTile(App("pl.inko.infopigulaOne", "pl.inko.infopigulaOne.MainActivity", MAIN), TileSize.THIRD),
     )
+
+    /** Gest na ekranie Start (jak "swipe left" w Multilauncherze). */
+    val swipeRightApp = App("org.mozilla.firefox", "org.mozilla.firefox.App", MAIN)
+    const val SWIPE_RIGHT_SINCE = 3
 
     val hidden = listOf(
         App("com.android.deskclock", "com.android.deskclock.DeskClockTabActivity", MAIN),

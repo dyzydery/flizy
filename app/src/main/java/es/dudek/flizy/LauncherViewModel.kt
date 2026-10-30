@@ -75,6 +75,10 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         config.tiles.mapNotNull { t -> byKey[t.key]?.let { Tile(t, it) } }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
+    val swipeRightApp: StateFlow<AppEntry?> = combine(labeledApps, store.data) { apps, config ->
+        config.swipeRightApp?.let { key -> apps?.firstOrNull { it.key == key } }
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
     val pinnedKeys: StateFlow<Set<AppKey>> = store.data
         .map { c -> c.tiles.mapTo(HashSet()) { it.key } }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
@@ -231,6 +235,8 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
 
     fun setAmoledBlack(enabled: Boolean) = update { it.copy(amoledBlack = enabled) }
 
+    fun setSwipeRightApp(key: AppKey?) = update { it.copy(swipeRightApp = key) }
+
     fun setAutoLaunch(enabled: Boolean) = update { it.copy(autoLaunchSingleMatch = enabled) }
 
 
@@ -265,6 +271,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
         val hidden = newer(PersonalSeed.hidden) { 1 }.mapNotNull { h ->
             resolve(h)?.key ?: serial(h.userId)?.let { AppKey(h.packageName, h.className ?: return@let null, it) }
         }
+        val swipeApp = if (fresh || applied < PersonalSeed.SWIPE_RIGHT_SINCE) resolve(PersonalSeed.swipeRightApp)?.key else null
         val aliases = newer(PersonalSeed.aliases) { it.since }
             .mapNotNull { a -> serial(a.userId)?.let { AppAlias(a.packageName, it, a.label) } }
 
@@ -287,6 +294,7 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
                 tiles = tiles,
                 hiddenApps = (c.hiddenApps + hidden).distinct(),
                 aliases = c.aliases.filterNot { (it.packageName to it.userSerial) in newKeys } + aliases,
+                swipeRightApp = c.swipeRightApp ?: swipeApp,
                 seedVersion = PersonalSeed.VERSION,
             )
         }

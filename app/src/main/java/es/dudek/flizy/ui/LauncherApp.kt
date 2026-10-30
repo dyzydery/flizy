@@ -22,6 +22,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Velocity
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -50,7 +57,7 @@ import kotlinx.coroutines.launch
 private class MenuRequest(val anchorBottomPx: Float, val items: List<MenuItem>)
 
 /** Ekrany otwierane nad pagerem Start/Aplikacje. */
-private enum class Screen { Settings, EditTiles, AddTile, HiddenApps }
+private enum class Screen { Settings, EditTiles, AddTile, HiddenApps, PickSwipeApp }
 
 private const val PAGE_START = 0
 private const val PAGE_APPS = 1
@@ -72,6 +79,7 @@ fun LauncherApp(
     val pinned by vm.pinnedKeys.collectAsStateWithLifecycle()
     val tiles by vm.tiles.collectAsStateWithLifecycle()
     val hiddenApps by vm.hiddenApps.collectAsStateWithLifecycle()
+    val swipeRightApp by vm.swipeRightApp.collectAsStateWithLifecycle()
 
     val cfg = config ?: run {
         Box(Modifier.fillMaxSize().background(Metro.Background))
@@ -161,6 +169,43 @@ fun LauncherApp(
         }
     }
 
+    // Gesty na ekranie Start, rozpoznawane z przewijania, którego nikt nie zużył:
+    // w prawo (pager jest na pierwszej stronie) i w dół (kafelki są na samej górze).
+    val gestureThreshold = with(LocalDensity.current) { 96.dp.toPx() }
+    val gestures = remember(gestureThreshold) {
+        object : NestedScrollConnection {
+            var dx = 0f
+            var dy = 0f
+            var fired = false
+
+            override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+                if (source != NestedScrollSource.UserInput || fired || pager.currentPage != PAGE_START || screens.isNotEmpty()) {
+                    return Offset.Zero
+                }
+                if (available.x > 0f) dx += available.x
+                if (available.y > 0f) dy += available.y
+                when {
+                    dx > gestureThreshold -> {
+                        fired = true
+                        swipeRightApp?.let { vm.launch(it) }
+                    }
+                    dy > gestureThreshold -> {
+                        fired = true
+                        scope.launch { pager.animateScrollToPage(PAGE_APPS) }
+                    }
+                }
+                return Offset.Zero
+            }
+
+            override suspend fun onPreFling(available: Velocity): Velocity {
+                dx = 0f
+                dy = 0f
+                fired = false
+                return Velocity.Zero
+            }
+        }
+    }
+
     // Launcher nie ma dokąd wrócić: Back zamyka ekran nakładkowy albo wraca z listy do kafelków.
     BackHandler {
         when {
@@ -172,7 +217,7 @@ fun LauncherApp(
     val theme = themeById(cfg.theme)
     val colors = FlizyColors(theme, theme.accent(cfg.accent).color, cfg.rainbow, cfg.amoledBlack)
     CompositionLocalProvider(LocalColors provides colors, LocalAccent provides colors.accent) {
-        Box(Modifier.fillMaxSize().background(Metro.Background)) {
+        Box(Modifier.fillMaxSize().background(Metro.Background).nestedScroll(gestures)) {
             HorizontalPager(state = pager, beyondViewportPageCount = 1, modifier = Modifier.fillMaxSize()) { page ->
                 when (page) {
                     PAGE_START -> StartScreen(
@@ -221,8 +266,22 @@ fun LauncherApp(
                         onEditTiles = { push(Screen.EditTiles) },
                         hiddenCount = hiddenApps.size,
                         onManageHidden = { push(Screen.HiddenApps) },
+                        swipeRightApp = swipeRightApp?.label,
+                        onPickSwipeApp = { push(Screen.PickSwipeApp) },
+                        onClearSwipeApp = { vm.setSwipeRightApp(null) },
                     )
                     Screen.HiddenApps -> HiddenAppsScreen(hiddenApps, vm.icons, onUnhide = { vm.unhide(it.key) })
+                    Screen.PickSwipeApp -> AppListScreen(
+                        apps = apps,
+                        icons = vm.icons,
+                        active = resumed && screens.lastOrNull() == Screen.PickSwipeApp,
+                        autoLaunch = false,
+                        title = stringResource(R.string.picker_gesture_title),
+                        onLaunch = { app ->
+                            vm.setSwipeRightApp(app.key)
+                            pop()
+                        },
+                    )
                     Screen.EditTiles -> EditTilesScreen(
                         tiles = tiles,
                         icons = vm.icons,

@@ -50,6 +50,7 @@
     <string name="edit_move_down">Przesuń w dół</string>
     <string name="edit_unpin">Odepnij</string>
     <string name="picker_title">dodaj</string>
+    <string name="picker_gesture_title">gest</string>
 
     <!-- Ustawienia -->
     <string name="settings_title">ustawienia</string>
@@ -59,6 +60,12 @@
     <string name="settings_accent">Kolor akcentu</string>
     <string name="settings_rainbow">Kafelki w kolorach tęczy</string>
     <string name="settings_rainbow_desc">Każdy kafelek w kolejnym kolorze motywu. Akcent nadal koloruje nagłówki i przełączniki.</string>
+    <string name="settings_gestures">Gesty na ekranie Start</string>
+    <string name="settings_gesture_right">Przeciągnięcie palcem w prawo →</string>
+    <string name="settings_gesture_none">nic nie robi</string>
+    <string name="settings_gesture_pick">Wybierz aplikację</string>
+    <string name="settings_gesture_clear">Wyłącz</string>
+    <string name="settings_gesture_down">Przeciągnięcie w dół (kafelki na samej górze) otwiera wyszukiwarkę aplikacji. Przeciągnięcie w lewo ← otwiera listę aplikacji.</string>
     <string name="settings_search">Wyszukiwanie</string>
     <string name="settings_auto_launch">Uruchamiaj od razu przy jednym dopasowaniu</string>
     <string name="settings_auto_launch_desc">Gdy w wyszukiwarce zostanie dokładnie jedna aplikacja, otwórz ją bez stukania.</string>

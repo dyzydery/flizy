@@ -50,6 +50,9 @@ fun SettingsScreen(
     onEditTiles: () -> Unit,
     hiddenCount: Int,
     onManageHidden: () -> Unit,
+    swipeRightApp: String?,
+    onPickSwipeApp: () -> Unit,
+    onClearSwipeApp: () -> Unit,
 ) {
     Column(
         Modifier
@@ -82,6 +85,23 @@ fun SettingsScreen(
             }
             BasicText(accent.name, style = MetroText.Body, modifier = Modifier.padding(top = 8.dp, bottom = 10.dp))
             AccentGrid(theme.accents, selected = accent.id, onSelect = onAccent)
+
+            SectionTitle(stringResource(R.string.settings_gestures))
+            BasicText(stringResource(R.string.settings_gesture_right), style = MetroText.Body)
+            BasicText(
+                swipeRightApp ?: stringResource(R.string.settings_gesture_none),
+                style = MetroText.Subtle,
+                modifier = Modifier.padding(top = 2.dp, bottom = 10.dp),
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                MetroButton(stringResource(R.string.settings_gesture_pick), onClick = onPickSwipeApp)
+                if (swipeRightApp != null) MetroButton(stringResource(R.string.settings_gesture_clear), onClick = onClearSwipeApp)
+            }
+            BasicText(
+                stringResource(R.string.settings_gesture_down),
+                style = MetroText.Subtle,
+                modifier = Modifier.padding(top = 12.dp),
+            )
 
             SectionTitle(stringResource(R.string.settings_search))
             SettingRow(

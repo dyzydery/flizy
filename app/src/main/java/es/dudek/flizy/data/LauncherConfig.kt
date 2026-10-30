@@ -66,6 +66,8 @@ data class LauncherConfig(
     val autoLaunchSingleMatch: Boolean = true,
     val hiddenApps: List<AppKey> = emptyList(),
     val aliases: List<AppAlias> = emptyList(),
+    /** Aplikacja otwierana przeciągnięciem palcem w prawo na ekranie Start; null = brak. */
+    val swipeRightApp: AppKey? = null,
     /** Wersja zastosowanej konfiguracji startowej ([PersonalSeed]); 0 = jeszcze nie zastosowana. */
     val seedVersion: Int = 0,
 ) {
